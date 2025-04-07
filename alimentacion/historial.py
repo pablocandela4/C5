@@ -1,4 +1,7 @@
+import csv
+from datetime import datetime
 from animales import Animal
+
 
 class Historial:
     def __init__(self, nombre):
