@@ -13,7 +13,8 @@ class Alimentacion:
                   f"{comida['coste']}€ en {comida['lugar_compra']}")
 
 
-    def añadir(self, tipo_comida, marca, cantidad, fecha_compra, fecha_caducidad, coste, lugar_compra):
+    @staticmethod
+    def anyadir(self, tipo_comida, marca, cantidad, fecha_compra, fecha_caducidad, coste, lugar_compra):
         alimento = {
             "tipo_comida": tipo_comida,
             "marca": marca,
