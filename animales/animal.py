@@ -185,7 +185,7 @@ class Animal(ABC):
 
     def historial(self):
         """Muestra toda la información acumulada de la mascota."""
-        print(f"\n HISTORIAL: {self.nombre} ---")
+        print(f"\n HISTORIAL: {self.nombre} ")
         print("\n Datos del Dueño:")
         print(f"Nombre: {self.nombre_duenyo} {self.apellido_duenyo} | DNI: {self.dni_duenyo}")
         print("\n Cuidados:")
