@@ -161,7 +161,6 @@ class Animal(ABC):
     """
       Función de compra de mascota
       """
-
     def compra_mascota(self, id_vendedor, fecha_compra, coste):
         """Registra la compra de la mascota."""
         self.compras.append({
