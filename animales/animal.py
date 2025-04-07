@@ -2,7 +2,6 @@ import csv
 from abc import ABC
 from datetime import datetime
 
-
 class Animal(ABC):
     """
     Animal es la clase base para todas las mascotas, ya sean perro, pez, gato o ave.
