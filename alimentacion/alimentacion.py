@@ -1,77 +1,80 @@
 import csv
 from datetime import datetime
-from animales import Animal
 
 class Alimentacion:
-    def __init__(self, ):
-        self.historial = []
+    def __init__(self, alimento, tipo_comida, cantidad, fecha_caducidad, coste):
+        self.alimento = alimento
+        self.tipo_comida = tipo_comida
+        self.cantidad = cantidad  # en gramos
+        self.fecha_caducidad = datetime.strptime(fecha_caducidad, "%Y-%m-%d")
+        self.coste = float(coste)
 
-    def mostrar(self):
-        for i, comida in enumerate(self.historial, 1):
-            print(f"{i}. {comida['tipo_comida']} ({comida['marca']}) | {comida['cantidad']}g | "
-                  f"Compra: {comida['fecha_compra'].date()} | Caduca: {comida['fecha_caducidad'].date()} | "
-                  f"{comida['coste']}€ en {comida['lugar_compra']}")
+    def __str__(self):
+        return (
+            f"{self.tipo_comida} | {self.cantidad}g | "
+            f"Datos: caduca en {self.fecha_caducidad.date()} y tiene un coste de {self.coste}€ | "
+        )
 
 
-    @staticmethod
-    def anyadir(self, tipo_comida, marca, cantidad, fecha_compra, fecha_caducidad, coste, lugar_compra):
-        alimento = {
-            "tipo_comida": tipo_comida,
-            "marca": marca,
-            "cantidad": cantidad,
-            "fecha_compra": datetime.strptime(fecha_compra, "%Y-%m-%d"),
-            "fecha_caducidad": datetime.strptime(fecha_caducidad, "%Y-%m-%d"),
-            "coste": coste,
-            "lugar_compra": lugar_compra
-        }
-    def guardar_csv(self, archivo):
+class HistorialAlimentacion(Alimentacion):
+    def __init__(self, alimento, tipo_comida, cantidad, fecha_caducidad, coste):
+        super().__init__(alimento, tipo_comida, cantidad, fecha_caducidad, coste)
+        self.alimentos =[]
+
+    def __str__(self):
+        if not self.alimentos:
+            return "  - Sin alimentos registrados"
+        return "\n".join(f"  - {v}" for v in self.alimentos)
+
+    def agregar_alimento(self, alimento, auto_guardar=True, archivo='alimetacion.csv'):
+        self.alimentos.append(alimento)
+        if auto_guardar:
+            self.guardar_csv(archivo)
+
+    def guardar_csv(self, archivo='alimentacion.csv'):
         with open(archivo, mode='w', newline='') as file:
-            campos = ["tipo_comida", "marca", "cantidad", "fecha_compra", "fecha_caducidad", "coste",
-                          "lugar_compra"]
+            campos = ["tipo_comida", "marca", "cantidad", "fecha_caducidad", "coste"]
             writer = csv.DictWriter(file, fieldnames=campos)
             writer.writeheader()
-            for comida in self.historial:
+            for a in self.alimentos:
                 writer.writerow({
-                        "tipo_comida": comida["tipo_comida"],
-                        "marca": comida["marca"],
-                        "cantidad": comida["cantidad"],
-                        "fecha_compra": comida["fecha_compra"].strftime("%Y-%m-%d"),
-                        "fecha_caducidad": comida["fecha_caducidad"].strftime("%Y-%m-%d"),
-                        "coste": comida["coste"],
-                        "lugar_compra": comida["lugar_compra"]
-                    })
+                    'alimento': a.alimento,
+                    "tipo_comida": a.tipo_comida,
+                    "cantidad": a.cantidad,
+                    "fecha_caducidad": a.fecha_caducidad.strftime("%Y-%m-%d"),
+                    "coste": f"{a.coste:.2f}",
+                })
 
     def cargar_csv(self, archivo):
         try:
             with open(archivo, mode='r') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    self.añadir(
-                            row["tipo_comida"],
-                            row["marca"],
-                            int(row["cantidad"]),
-                            row["fecha_compra"],
-                            row["fecha_caducidad"],
-                            float(row["coste"]),
-                            row["lugar_compra"]
-                        )
+                    alimento = Alimentacion(
+                        row['alimento'],
+                        row["tipo_comida"],
+                        int(row["cantidad"]),
+                        row["fecha_caducidad"],
+                        float(row["coste"])
+                    )
+                    self.agregar_alimento(alimento)
         except FileNotFoundError:
-            print(f"Archivo {archivo} no encontrado. Empezando con historial vacío.")
+            print(f"Archivo {archivo} no encontrado.")
 
-        # Sobrecarga de operadores
+    # Sobrecarga de operadores
     def __len__(self):
-        return len(self.historial)
+        return len(self.alimentos)
 
     def __getitem__(self, index):
-         return self.historial[index]
+         return self.alimentos[index]
 
     def __add__(self, otro):
-        nuevo = Alimentacion()
-        nuevo.historial = self.historial + otro.historial
+        nuevo = HistorialAlimentacion()
+        nuevo.alimentos = self.alimentos + otro.alimentos
         return nuevo
 
     def __iadd__(self, otro):
-        self.historial += otro.historial
+        self.alimentos += otro.alimentos
         return self
 
 
