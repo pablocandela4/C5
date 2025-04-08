@@ -39,7 +39,6 @@ class Historial:
             print(f"[INFO] Archivo {archivo} no encontrado. Comenzando con historial vacío.")
 
     def mostrar(self):
-        """Muestra todo el historial cargado desde el CSV."""
         if not self.historial:
             print("No hay registros en el historial.")
         else:
