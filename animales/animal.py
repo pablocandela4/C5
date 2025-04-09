@@ -1,198 +1,255 @@
-import csv
-from abc import ABC
-from datetime import datetime
+from vacunacion import CartillaVacunacion
 
-class Animal(ABC):
+
+# from logica.vacunacion import CartillaVacunacion
+
+class Animal:
     """
-    Animal es la clase base para todas las mascotas, ya sean perro, pez, gato o ave.
-    Aquí se guardarán todos los atributos de los dueños, los historiales de vacunas, alimentación, cuidados y compras.
+    Clase base que representa un animal genérico. Los animales pueden tener un chip, un nombre, una especie,
+    una edad y una cartilla de vacunación (opcionalmente).
     """
 
-    def __init__(self, id_mascota, nombre, fecha_nacimiento, especie, raza, sexo, n_identificacion,
-                 nombre_duenyo, apellido_duenyo, telefono_duenyo, email_duenyo, dni_duenyo, chip_registro):
+    def __init__(self, chip, nombre, especie, edad, requiere_cartilla=True):
+        """
+        Inicializa un nuevo animal.
 
-        self.id_mascota = id_mascota
+        :param chip: El identificador del chip del animal (puede ser None si no tiene chip).
+        :param nombre: El nombre del animal.
+        :param especie: La especie del animal (por ejemplo, "Perro", "Gato").
+        :param edad: La edad del animal en años.
+        :param requiere_cartilla: Booleano que indica si el animal tiene una cartilla de vacunación.
+        """
+        self.chip = chip
         self.nombre = nombre
-        self.fecha_nacimiento = datetime.strptime(fecha_nacimiento, "%Y-%m-%d")
         self.especie = especie
-        self.raza = raza
-        self.sexo = sexo
-        self.numero_identificacion = n_identificacion
-
-        self.nombre_dueño = nombre_duenyo
-        self.apellido_dueño = apellido_duenyo
-        self.telefono_dueño = telefono_duenyo
-        self.email_dueño = email_duenyo
-        self.dni_dueño = dni_duenyo
-        self.chip_registro = chip_registro
-
-        self.vacunas = []
-        self.alimentacion = []
-        self.cuidados = []
-        self.compras = []
-
-    """
-    Método mágico para imprimir animal 
-    """
+        self.edad = edad
+        self.cartilla = CartillaVacunacion() if requiere_cartilla else None
+        self.dueno = None
 
     def __str__(self):
-        return f"{self.nombre} ({self.especie}, ID: {self.id_mascota})"
+        """
+        Representa al animal en formato legible como cadena de texto.
 
-    """
-    la función de registro mascota, únicamente nos devuelve la información asociada a las mismas
-    """
+        :return: Cadena que describe el animal, su especie, su edad, chip, dueño (si tiene) y cartilla de vacunación (si la tiene).
+        """
+        chip_info = f", Chip: {self.chip}" if self.chip else ""
+        dueno_info = f", Dueño: {self.dueno.nombre}" if self.dueno else ""
+        cartilla_info = f"\nCartilla de vacunación:\n{self.cartilla}" if self.cartilla else ""
+        base = f"{self.__class__.__name__}: {self.nombre} ({self.especie}, {self.edad} años{chip_info}{dueno_info})"
+        return f"{base}{cartilla_info}"
 
-    def registro_mascota(self):
-        return {
-            "ID": self.id_mascota,
-            "Nombre": self.nombre,
-            "Fecha nacimiento": self.fecha_nacimiento.strftime("%Y-%m-%d"),
-            "Especie": self.especie,
-            "Raza": self.raza,
-            "Sexo": self.sexo,
-            "ID Animal": self.n_identificacion,
-            "Dueño": f"{self.nombre_duenyo} {self.apellido_duenyo}",
-            "Teléfono": self.telefono_duenyo,
-            "Email": self.email_duenyo,
-            "DNI": self.dni_duenyo,
-            "Chip": self.chip_registro
-        }
+    def __repr__(self):
+        """
+        Representación detallada del animal, útil para depuración.
 
-    """
-    Función para guardar en un csv con nombre animales los datos asociados al registro de las mascotas
-    """
+        :return: Cadena con la representación interna del animal, incluyendo su nombre, especie, edad, chip, y cartilla de vacunación.
+        """
+        if self.cartilla:
+            vacunas_repr = ", ".join(repr(v) for v in self.cartilla.vacunas) or "sin vacunas"
+        else:
+            vacunas_repr = "no aplica"
+        dueno_info = f", dueno_nif={self.dueno.nif!r}" if self.dueno else ""
+        return (
+            f"{self.__class__.__name__}(nombre={self.nombre!r}, especie={self.especie!r}, "
+            f"edad={self.edad!r}, chip={self.chip!r}, vacunas=[{vacunas_repr}]{dueno_info})"
+        )
 
-    def guardar_en_csv(self, archivo="animales.csv"):
-        datos = self.registro_mascota()
-        with open(archivo, mode='a', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=datos.keys())
-            if file.tell() == 0:
-                writer.writeheader()
-            writer.writerow(datos)
+    def __eq__(self, other):
+        """
+        Compara dos animales para ver si son iguales según su chip.
 
-    """
-    Carga los registros de mascotas desde un archivo CSV (devuelve una lista de diccionarios)
-    """
+        :param other: Otro objeto de tipo Animal.
+        :return: True si los animales son iguales (mismo chip), False en caso contrario.
+        """
+        if not isinstance(other, Animal):
+            return False
+        return self.chip == other.chip
 
-    @staticmethod
-    def cargar_mascotas_desde_csv(archivo="animales.csv"):
+    def vacunar(self, vacuna):
+        """
+        Vacuna al animal, si tiene una cartilla de vacunación.
 
-        mascotas = []
+        :param vacuna: El nombre de la vacuna a aplicar.
+        :raises AttributeError: Si el animal no tiene cartilla de vacunación.
+        """
         try:
-            with open(archivo, mode='r') as file:
-                reader = csv.DictReader(file)
-                for registro in reader:
-                    mascotas.append(registro)
-        except FileNotFoundError:
-            print(f"No se encontró el archivo {archivo}.")
-        return mascotas
+            if self.cartilla:
+                self.cartilla.agregar_vacuna(vacuna)
+                print(f"{self.nombre} ha sido vacunado con {vacuna}.")
+            else:
+                raise AttributeError(f"{self.__class__.__name__} no puede ser vacunado porque no tiene cartilla.")
+        except AttributeError as e:
+            print(f"Error: {e}")
 
+
+class Perro(Animal):
     """
-      VACUNAS,  tendremos como métodos agregar y mostrar. Están relacionadas con el historial médico de la mascota. Por ello se registra el número de la vacina, la fecha en la que se puso, el veterinario(n_colegiado)que se la puso y el coste
-      """
-
-    def agregar_vacuna(self, n_vacuna, fecha, n_colegiado, coste):
-
-        self.vacunas.append({
-            "n_vacuna": n_vacuna,
-            "fecha": datetime.strptime(fecha, "%Y-%m-%d"),
-            "n_colegiado": n_colegiado,
-            "coste": coste
-        })
-
-    def mostrar_vacunas(self):
-        """
-        Muestra las vacunas registradas.
-        """
-        for vacuna in self.vacunas:
-            print(
-                f"- {vacuna['n_vacuna']} | Fecha: {vacuna['fecha']} | Colegiado: {vacuna['n_colegiado']} | Coste: {vacuna['coste']}€")
-
-    """
-      ALIMENTACION,  tenemos como métodos el agregar el tipo de comida, la marca, la cantidad, cuando se compró, la caducidad, el coste y mostrar esa alimentación
-      """
-
-    def agregar_alimento(self, tipo_comida, marca, cantidad, fecha_compra, fecha_caducidad, coste):
-
-        self.alimentacion.append({
-            "tipo_comida": tipo_comida,
-            "marca": marca,
-            "cantidad": cantidad,
-            "fecha_compra": datetime.strptime(fecha_compra, "%Y-%m-%d"),
-            "fecha_caducidad": datetime.strptime(fecha_caducidad, "%Y-%m-%d"),
-            "coste": coste,
-
-        })
-
-    def mostrar_alimentacion(self):
-        for registro in self.alimentacion:
-            print(
-                f"- {registro['tipo_comida']} ({registro['marca']}) | Cantidad: {registro['cantidad']}g | Compra: {registro['fecha_compra']} | Caduca: {registro['fecha_caducidad']} | {registro['coste']}€ en {registro['lugar_compra']}")
-
-    """ 
-    Funciones asociadas al cuidado de las mascotas
+    Clase que representa un perro, heredada de la clase Animal. Un perro tiene una raza además de las características comunes de un animal.
     """
 
-    def agregar_cuidado(self, tipo, fecha, estado="pendiente", comentario="", id_profesional=None):
-        """Agrega un cuidado o recordatorio al historial."""
-        self.cuidados.append({
-            "tipo": tipo,
-            "fecha": datetime.strptime(fecha, "%Y-%m-%d"),
-            "estado": estado,
-            "comentario": comentario,
-            "id_profesional": id_profesional
-        })
+    def __init__(self, chip, nombre, edad, raza):
+        """
+        Inicializa un nuevo perro.
 
-    def mostrar_cuidados(self):
+        :param chip: El identificador del chip del perro.
+        :param nombre: El nombre del perro.
+        :param edad: La edad del perro en años.
+        :param raza: La raza del perro.
         """
-        Muestra todos los cuidados registrados.
-        """
-        for cuidado in self.cuidados:
-            print(
-                f"- {cuidado['tipo']} | Fecha: {cuidado['fecha']} | Estado: {cuidado['estado']} | Comentario: {cuidado['comentario']} | Profesional: {cuidado['id_profesional']}")
+        super().__init__(chip, nombre, "Perro", edad)
+        self.raza = raza
 
-    def marcar_cuidado_realizado(self, indice):
+    def __str__(self):
         """
-        Marca un cuidado como realizado (según su posición en la lista).
-        """
-        if 0 <= indice < len(self.cuidados):
-            self.cuidados[indice]['estado'] = "realizado"
+        Representación legible del perro en formato cadena de texto.
 
+        :return: Cadena que describe al perro, incluyendo su raza y cartilla de vacunación (si la tiene).
+        """
+        cartilla_info = f"\nCartilla de vacunación:\n{self.cartilla}" if self.cartilla else ""
+        return (
+            f"{self.__class__.__name__}: {self.nombre} ({self.especie}, {self.edad} años, "
+            f"Raza: {self.raza}, Chip: {self.chip}){cartilla_info}"
+        )
+
+    def __repr__(self):
+        """
+        Representación detallada del perro para depuración.
+
+        :return: Cadena que representa al perro, con información sobre su raza y cartilla de vacunación.
+        """
+        base = super().__repr__()[:-1]
+        return f"{base}, raza={self.raza!r})"
+
+
+class Gato(Animal):
     """
-      Función de compra de mascota
-      """
-    def compra_mascota(self, id_vendedor, fecha_compra, coste):
-        """Registra la compra de la mascota."""
-        self.compras.append({
-            "dni_dueño": self.dni_duenyo,
-            "id_mascota": self.id_mascota,
-            "id_vendedor": id_vendedor,
-            "fecha_compra": datetime.strptime(fecha_compra, "%Y-%m-%d"),
-            "coste": coste
-        })
-
-    def mostrar_historial_compra(self):
-        """
-        Muestra el historial de compra de la mascota. Y en el aparecen tanto los datos asociados al vendedor como a la fecha de compra o el coste. El identificativo del dueño será el dni
-        """
-        for compra in self.compras:
-            print(
-                f"Comprada por DNI {compra['dni_duenyo']} desde vendedor ID {compra['id_vendedor']} en {compra['fecha_compra']} por {compra['coste']}€")
-
-    """ 
-    Funcion historial, esta función recoge todos los datos asociados a nuestra tienda de mascotas en el que aparecen los datos del dueño,los cuidados, las vacunas, la alimentación y el historial de compra asociado
+    Clase que representa un gato, heredada de la clase Animal. Un gato tiene una raza además de las características comunes de un animal.
     """
 
-    def historial(self):
-        """Muestra toda la información acumulada de la mascota."""
-        print(f"\n HISTORIAL: {self.nombre} ")
-        print("\n Datos del Dueño:")
-        print(f"Nombre: {self.nombre_duenyo} {self.apellido_duenyo} | DNI: {self.dni_duenyo}")
-        print("\n Cuidados:")
-        self.mostrar_cuidados()
-        print("\n Vacunas:")
-        self.mostrar_vacunas()
-        print("\n Alimentación:")
-        self.mostrar_alimentacion()
-        print("\n Historial de compra:")
-        self.mostrar_historial_compra()
+    def __init__(self, chip, nombre, edad, raza):
+        """
+        Inicializa un nuevo gato.
+
+        :param chip: El identificador del chip del gato.
+        :param nombre: El nombre del gato.
+        :param edad: La edad del gato en años.
+        :param raza: La raza del gato.
+        """
+        super().__init__(chip, nombre, "Gato", edad)
+        self.raza = raza
+
+    def __str__(self):
+        """
+        Representación legible del gato en formato cadena de texto.
+
+        :return: Cadena que describe al gato, incluyendo su raza y cartilla de vacunación (si la tiene).
+        """
+        cartilla_info = f"\nCartilla de vacunación:\n{self.cartilla}" if self.cartilla else ""
+        return (
+            f"{self.__class__.__name__}: {self.nombre} ({self.especie}, {self.edad} años, "
+            f"Raza: {self.raza}, Chip: {self.chip}){cartilla_info}"
+        )
+
+    def __repr__(self):
+        """
+        Representación detallada del gato para depuración.
+
+        :return: Cadena que representa al gato, con información sobre su raza y cartilla de vacunación.
+        """
+        base = super().__repr__()[:-1]
+        return f"{base}, raza={self.raza!r})"
+
+
+class Ave(Animal):
+    """
+    Clase que representa un ave, heredada de la clase Animal. Las aves no requieren cartilla de vacunación.
+    """
+
+    def __init__(self, nombre, edad):
+        """
+        Inicializa un nuevo ave. No tiene cartilla de vacunación.
+
+        :param nombre: El nombre del ave.
+        :param edad: La edad del ave en años.
+        """
+        super().__init__(None, nombre, "Ave", edad, requiere_cartilla=False)
+
+    def __str__(self):
+        """
+        Representación legible del ave en formato cadena de texto.
+
+        :return: Cadena que describe al ave, incluyendo su especie y edad.
+        """
+        return f"{self.__class__.__name__}: {self.nombre} ({self.especie}, {self.edad} años)"
+
+    def __repr__(self):
+        """
+        Representación detallada del ave para depuración.
+
+        :return: Cadena que representa al ave, sin cartilla de vacunación.
+        """
+        base = super().__repr__()[:-1]
+        return f"{base})"
+
+
+class Pez(Animal):
+    """
+    Clase que representa un pez, heredada de la clase Animal. Los peces no requieren cartilla de vacunación.
+    """
+
+    def __init__(self, nombre, edad):
+        """
+        Inicializa un nuevo pez. No tiene cartilla de vacunación.
+
+        :param nombre: El nombre del pez.
+        :param edad: La edad del pez en años.
+        """
+        super().__init__(None, nombre, "Pez", edad, requiere_cartilla=False)
+
+    def __str__(self):
+        """
+        Representación legible del pez en formato cadena de texto.
+
+        :return: Cadena que describe al pez, incluyendo su especie y edad.
+        """
+        return f"{self.__class__.__name__}: {self.nombre} ({self.especie}, {self.edad} años)"
+
+    def __repr__(self):
+        """
+        Representación detallada del pez para depuración.
+
+        :return: Cadena que representa al pez, sin cartilla de vacunación.
+        """
+        base = super().__repr__()[:-1]
+        return f"{base})"
+
+
+if __name__ == "__main__":
+    p = Perro("X54612", "Luna", 3, "Beagle")
+    g = Gato("H3456", "Misi", 2, "Siames")
+    a = Ave("Piolín", 1)
+    pez = Pez("Nemo", 2)
+
+    print("=== PERRO ===")
+    print(str(p))
+    print(repr(p))
+    p.vacunar("Vacuna Antirrábica")
+    print()
+
+    print("=== GATO ===")
+    print(str(g))
+    print(repr(g))
+    g.vacunar("Vacuna Antirrábica")
+    print()
+
+    print("=== AVE ===")
+    print(str(a))
+    print(repr(a))
+    a.vacunar("Vacuna Antirrábica")  # No tiene cartilla, se lanzará una excepción
+    print()
+
+    print("=== PEZ ===")
+    print(str(pez))
+    print(repr(pez))
+    pez.vacunar("Vacuna Antirrábica")  # No tiene cartilla, se lanzará una excepción
+    print()
