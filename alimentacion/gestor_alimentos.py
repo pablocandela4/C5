@@ -1,6 +1,6 @@
 import csv
 import os
-from alimentacion import Alimento
+from alimentacion import Alimento, venta
 
 GESTOR_ARCHIVO = "gestor_alimentos.csv"
 
