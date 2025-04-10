@@ -1,6 +1,7 @@
 from vacunacion import CartillaVacunacion
 
 
+
 # from logica.vacunacion import CartillaVacunacion
 
 class Animal:
@@ -80,6 +81,9 @@ class Animal:
                 raise AttributeError(f"{self.__class__.__name__} no puede ser vacunado porque no tiene cartilla.")
         except AttributeError as e:
             print(f"Error: {e}")
+
+
+
 
 
 class Perro(Animal):
