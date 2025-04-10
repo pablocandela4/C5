@@ -1,9 +1,7 @@
-
 from vacunacion import CartillaVacunacion
+from alimentacion import ListaAlimentos, Alimento
+from cuidado_base import CuidadoProgramado
 
-
-
-# from logica.vacunacion import CartillaVacunacion
 
 class Animal:
     """
@@ -11,7 +9,7 @@ class Animal:
     una edad y una cartilla de vacunación (opcionalmente).
     """
 
-    def __init__(self, chip, nombre, especie, edad, requiere_cartilla=True):
+    def __init__(self, chip, nombre, especie, edad, requiere_cartilla=True, requiere_alimentos=True, requiere_cuidados=True):
         """
         Inicializa un nuevo animal.
 
@@ -19,26 +17,34 @@ class Animal:
         :param nombre: El nombre del animal.
         :param especie: La especie del animal (por ejemplo, "Perro", "Gato").
         :param edad: La edad del animal en años.
-        :param requiere_cartilla: Booleano que indica si el animal tiene una cartilla de vacunación.
+        :param requiere_cartilla: Booleano que indica si el animal tiene una cartilla de vacunación (por defecto True).
+        :param requiere_alimentos: Booleano que indica si el animal requiere una lista de alimentos (por defecto True).
+        :param requiere_cuidados: Booleano que indica si el animal requiere cuidados programados (por defecto True).
         """
+        self.requiere_alimentos = requiere_alimentos
         self.chip = chip
         self.nombre = nombre
         self.especie = especie
         self.edad = edad
         self.cartilla = CartillaVacunacion() if requiere_cartilla else None
+        self.lista_alimentos = ListaAlimentos() if requiere_alimentos else None
         self.dueno = None
+        self.cuidados_programados = [] if requiere_cuidados else []
 
     def __str__(self):
         """
         Representa al animal en formato legible como cadena de texto.
 
-        :return: Cadena que describe el animal, su especie, su edad, chip, dueño (si tiene) y cartilla de vacunación (si la tiene).
+        :return: Cadena que describe el animal, su especie, su edad, chip, dueño (si tiene) y cartilla de vacunación (si la tiene),
+                 junto con su lista de alimentos y cuidados programados.
         """
         chip_info = f", Chip: {self.chip}" if self.chip else ""
         dueno_info = f", Dueño: {self.dueno.nombre}" if self.dueno else ""
         cartilla_info = f"\nCartilla de vacunación:\n{self.cartilla}" if self.cartilla else ""
+        alimentos_info = f"\nAlimentos:\n {self.lista_alimentos}" if self.lista_alimentos else ""
+        cuidados_info = f"\nCuidados programados:\n{self.mostrar_cuidados()}" if self.cuidados_programados else ""
         base = f"{self.__class__.__name__}: {self.nombre} ({self.especie}, {self.edad} años{chip_info}{dueno_info})"
-        return f"{base}{cartilla_info}"
+        return f"{base}{cartilla_info}{alimentos_info}{cuidados_info}"
 
     def __repr__(self):
         """
@@ -71,20 +77,67 @@ class Animal:
         """
         Vacuna al animal, si tiene una cartilla de vacunación.
 
-        :param vacuna: El nombre de la vacuna a aplicar.
+        :param vacuna: El nombre de la vacuna a aplicar (debe ser una cadena de texto).
         :raises AttributeError: Si el animal no tiene cartilla de vacunación.
         """
         try:
             if self.cartilla:
-                self.cartilla.agregar_vacuna(vacuna)
+                nueva_vacuna = Vacuna(vacuna, "2025-04-10")  # Se crea un objeto Vacuna con el nombre y una fecha de ejemplo
+                self.cartilla.agregar_vacuna(nueva_vacuna)
                 print(f"{self.nombre} ha sido vacunado con {vacuna}.")
             else:
                 raise AttributeError(f"{self.__class__.__name__} no puede ser vacunado porque no tiene cartilla.")
         except AttributeError as e:
             print(f"Error: {e}")
 
+    def alimentar(self, alimento: Alimento):
+        """
+        Alimenta al animal, agregando un alimento a su lista de alimentos.
 
+        :param alimento: Un objeto de tipo Alimento que será agregado a la lista del animal.
+        """
+        if self.lista_alimentos:
+            self.lista_alimentos.agregar_alimento(alimento)
+            print(f"{self.nombre} ha sido alimentado con {alimento.alimento}.")
+        else:
+            print(f"{self.nombre} no tiene lista de alimentos.")
 
+    def asignar_alimentos(self, catalogo):
+        """
+        Asigna alimentos del catálogo según el tipo de animal.
+
+        :param catalogo: Lista de alimentos disponibles de tipo Alimento.
+        """
+        if self.lista_alimentos:
+            alimentos_disponibles = [alimento for alimento in catalogo if alimento.tipo_animal == self.especie.lower()]
+            for alimento in alimentos_disponibles:
+                self.lista_alimentos.agregar_alimento(alimento)
+            print(f"Alimentos asignados a {self.nombre}: {', '.join([a.alimento for a in alimentos_disponibles])}")
+        else:
+            print(f"{self.nombre} no tiene lista de alimentos asignada.")
+
+    def asignar_cuidado(self, cuidado: CuidadoProgramado):
+        """
+        Asigna un cuidado programado al animal.
+
+        :param cuidado: Un objeto de tipo CuidadoProgramado que se asignará al animal.
+        """
+        if self.requiere_cuidados:
+            self.cuidados_programados.append(cuidado)
+            print(f"{self.nombre} tiene un nuevo cuidado programado: {cuidado.tipo_cuidado} para el {cuidado.fecha.date()}.")
+        else:
+            print(f"{self.nombre} no requiere cuidados programados.")
+
+    def mostrar_cuidados(self):
+        """
+        Muestra los cuidados programados para el animal de forma legible.
+
+        :return: Una cadena con la lista de cuidados programados o un mensaje indicando que no hay cuidados programados.
+        """
+        if self.cuidados_programados:
+            return "\n".join(str(cuidado) for cuidado in self.cuidados_programados)
+        else:
+            return "  - No hay cuidados programados."
 
 
 class Perro(Animal):
@@ -229,33 +282,6 @@ class Pez(Animal):
         return f"{base})"
 
 
-if __name__ == "__main__":
-    p = Perro("X54612", "Luna", 3, "Beagle")
-    g = Gato("H3456", "Misi", 2, "Siames")
-    a = Ave("Piolín", 1)
-    pez = Pez("Nemo", 2)
 
-    print("=== PERRO ===")
-    print(str(p))
-    print(repr(p))
-    p.vacunar("Vacuna Antirrábica")
-    print()
 
-    print("=== GATO ===")
-    print(str(g))
-    print(repr(g))
-    g.vacunar("Vacuna Antirrábica")
-    print()
-
-    print("=== AVE ===")
-    print(str(a))
-    print(repr(a))
-    a.vacunar("Vacuna Antirrábica")  # No tiene cartilla, se lanzará una excepción
-    print()
-
-    print("=== PEZ ===")
-    print(str(pez))
-    print(repr(pez))
-    pez.vacunar("Vacuna Antirrábica")  # No tiene cartilla, se lanzará una excepción
-    print()
 
