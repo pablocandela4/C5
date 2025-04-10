@@ -245,5 +245,5 @@ class Pez(Animal):
         Representación detallada para el pez.
         """
         base = super().__repr__()[:-1]
-        return f"{base})"
+        return f"{base})"  
 
