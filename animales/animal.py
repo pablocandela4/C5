@@ -6,14 +6,14 @@ Incluye especializaciones como Perro, Gato, Ave y Pez.
 También se integra con módulos externos para gestionar alimentación, vacunación y tratamientos,
 así como un pequeño bloque de ejemplo para uso práctico al ejecutar el archivo como script principal.
 """
-from alimentacion import CatalogoAlimentos, Alimento
-from vacunacion import CartillaVacunacion, Vacuna
-from cuidado_base import CuidadoProgramado
+from alimentacion.alimentacion import CatalogoAlimentos, Alimento
+from salud.vacunacion import CartillaVacunacion, Vacuna
+from cuidados.cuidado_base import CuidadoProgramado
 from datetime import datetime
 
 # Importa dinámicamente las clases relacionadas con tratamientos para evitar importaciones circulares.
 def obtener_tratamiento():
-    from tratamiento import Tratamiento, RegistroTratamientos
+    from salud.tratamiento import Tratamiento, RegistroTratamientos
     return Tratamiento, RegistroTratamientos
 
 class Animal:
