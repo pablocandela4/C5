@@ -276,7 +276,7 @@ class Pez(Animal):
         """
         Representación detallada del pez para depuración.
 
-        :return: Cadena que representa al pez, sin cartilla de vacunación.
+        :return: Cadena que representa al pez, sin cartilla de vacunación
         """
         base = super().__repr__()[:-1]
         return f"{base})"
