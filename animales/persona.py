@@ -165,4 +165,4 @@ class Veterinario(Persona):
         Args:
             consulta (Consulta): Consulta realizada al animal.
         """
-        self.consultas.append(consulta)
+        self.consultas.append(consulta)    
