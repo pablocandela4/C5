@@ -11,6 +11,7 @@ from salud.vacunacion import CartillaVacunacion, Vacuna
 from cuidados.cuidado_base import CuidadoProgramado
 from datetime import datetime
 
+
 # Importa dinámicamente las clases relacionadas con tratamientos para evitar importaciones circulares.
 def obtener_tratamiento():
     from salud.tratamiento import Tratamiento, RegistroTratamientos
@@ -156,12 +157,7 @@ class Animal:
 
 class Perro(Animal):
     """
-
     Clase que representa un perro, heredando de la clase Animal.
-
-    Clase que representa un perro, heredada de la clase Animal. Un perro tiene una raza además de las
-    características comunes de un animal.
-
     """
     def __init__(self, chip, nombre, edad, raza):
         super().__init__(chip, nombre, "Perro", edad)
@@ -250,5 +246,6 @@ class Pez(Animal):
         Representación detallada para el pez.
         """
         base = super().__repr__()[:-1]
-        return f"{base})"  
+        return f"{base})"
+
 
