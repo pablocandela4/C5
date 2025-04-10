@@ -1,3 +1,4 @@
+
 from vacunacion import CartillaVacunacion
 
 
@@ -257,3 +258,4 @@ if __name__ == "__main__":
     print(repr(pez))
     pez.vacunar("Vacuna Antirrábica")  # No tiene cartilla, se lanzará una excepción
     print()
+
