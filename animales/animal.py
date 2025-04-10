@@ -89,7 +89,8 @@ class Animal:
 
 class Perro(Animal):
     """
-    Clase que representa un perro, heredada de la clase Animal. Un perro tiene una raza además de las características comunes de un animal.
+    Clase que representa un perro, heredada de la clase Animal. Un perro tiene una raza además de las
+    características comunes de un animal.
     """
 
     def __init__(self, chip, nombre, edad, raza):
