@@ -1,5 +1,5 @@
 import csv
-
+"Autor"
 def obtener_datos_animales(animales):
     """
     Obtiene los datos necesarios de los animales en formato de diccionario
