@@ -1,16 +1,4 @@
 import csv
-from datetime import datetime
-from animal import Perro, Gato, Ave, Pez
-from vacunacion import Vacuna
-from alimentacion import Alimento
-from cuidado_base import CuidadoProgramado
-
-
-
-def obtener_tratamiento():
-    from tratamiento import Tratamiento
-    return Tratamiento
-
 
 def obtener_datos_animales(animales):
     """
