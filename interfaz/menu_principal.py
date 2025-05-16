@@ -14,10 +14,10 @@ Autor: Lucas Beneyto
 
 import sys
 
-from .menu_animales import menu_animales
-from .menu_salud import menu_salud
-from .menu_alimentacion import menu_alimentacion
-from .menu_cuidados import menu_cuidados
+import menu_animales
+import menu_salud
+import menu_alimentacion
+import menu_cuidados
 
 def menu_principal():
     """
@@ -47,13 +47,13 @@ def menu_principal():
         opcion = input("Selecciona una opción: ").strip()
 
         if opcion == '1':
-            menu_animales()
+            menu_animales.menu_animales()
         elif opcion == '2':
-            menu_salud()
+            menu_salud.menu_salud()
         elif opcion == '3':
-            menu_alimentacion()
+            menu_alimentacion.menu_alimentacion()
         elif opcion == '4':
-            menu_cuidados()
+            menu_cuidados.menu_cuidados()
         elif opcion == '5':
             print("Saliendo de la aplicación... ¡Hasta la próxima!")
             sys.exit(0)
