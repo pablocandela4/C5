@@ -3,13 +3,16 @@ Fábrica sencilla: importa una variable de entorno DB_BACKEND
 ('sqlite' | 'mysql') y devuelve la instancia adecuada, accesible como
 `database.db`.
 """
-import os
+# database/__init__.py
+
 from .sqlite_manager import SQLiteManager
-from .mysql_manager import MySQLManager
+from .mysql_manager   import MySQLManager
 
-_BACKEND = os.getenv("DB_BACKEND", "sqlite").lower()
+def db():
+    backend = os.getenv("DB_BACKEND", "sqlite")
+    if backend == "mysql":
+        return MySQLManager()
+    else:
+        return SQLiteManager()
 
-if _BACKEND == "mysql":
-    db = MySQLManager()
-else:
-    db = SQLiteManager()
+db = db()   # instancia global usada en app.py
