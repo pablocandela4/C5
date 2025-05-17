@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS animales (
   chip     VARCHAR(60) AUTO_INCREMENT PRIMARY KEY,
   tipo     VARCHAR(20),
   nombre   VARCHAR(100),
-  especie   VARCCHAR (60),
+  especie   VARCHAR (60),
   edad     INT,
 
 
