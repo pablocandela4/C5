@@ -18,12 +18,12 @@ CONFIG = dict(
 
 _ANIMAL_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS animales (
-  id       INT AUTO_INCREMENT PRIMARY KEY,
+  chip     VARCHAR(60) AUTO_INCREMENT PRIMARY KEY,
   tipo     VARCHAR(20),
   nombre   VARCHAR(100),
   edad     INT,
-  chip     VARCHAR(60),
-  raza     VARCHAR(60)
+
+
 );
 """
 
@@ -47,7 +47,7 @@ class MySQLManager(DBManager):
 
     # ---------- implementación CRUD ----------
     def insert_animal(self, datos: Dict[str, Any]) -> int:
-        q = ("INSERT INTO animales (tipo, nombre, edad, chip, raza) "
+        q = ("INSERT INTO animales (tipo, nombre, edad, chip, "
              "VALUES (%(tipo)s, %(nombre)s, %(edad)s, %(chip)s, %(raza)s)")
         with self._connect() as con:
             cur = con.cursor()
