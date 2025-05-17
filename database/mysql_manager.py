@@ -18,12 +18,13 @@ CONFIG = dict(
 
 _ANIMAL_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS animales (
-  id       INT AUTO_INCREMENT PRIMARY KEY,
+  chip     VARCHAR(60) AUTO_INCREMENT PRIMARY KEY,
   tipo     VARCHAR(20),
   nombre   VARCHAR(100),
+  especie   VARCHAR (60),
   edad     INT,
-  chip     VARCHAR(60),
-  raza     VARCHAR(60)
+
+
 );
 """
 
@@ -47,8 +48,8 @@ class MySQLManager(DBManager):
 
     # ---------- implementación CRUD ----------
     def insert_animal(self, datos: Dict[str, Any]) -> int:
-        q = ("INSERT INTO animales (tipo, nombre, edad, chip, raza) "
-             "VALUES (%(tipo)s, %(nombre)s, %(edad)s, %(chip)s, %(raza)s)")
+        q = ("INSERT INTO animales (tipo, nombre, edad, chip, especie "
+             "VALUES (%(tipo)s, %(nombre)s, %(edad)s, %(chip)s, %(especie)s)")
         with self._connect() as con:
             cur = con.cursor()
             cur.execute(q, datos)
@@ -65,19 +66,19 @@ class MySQLManager(DBManager):
             cur.close()
             return rows
 
-    def update_animal(self, animal_id: int, datos: Dict[str, Any]) -> None:
+    def update_animal(self, chip: str, datos: Dict[str, Any]) -> None:
         sets = ", ".join(f"{k}=%({k})s" for k in datos.keys())
-        datos["id"] = animal_id
-        q = f"UPDATE animales SET {sets} WHERE id=%(id)s"
+        datos["chip"] = chip
+        q = f"UPDATE animales SET {sets} WHERE chip=%(chip)s"
         with self._connect() as con:
             cur = con.cursor()
             cur.execute(q, datos)
             con.commit()
             cur.close()
 
-    def delete_animal(self, animal_id: int) -> None:
+    def delete_animal(self, chip: str) -> None:
         with self._connect() as con:
             cur = con.cursor()
-            cur.execute("DELETE FROM animales WHERE id=%s", (animal_id,))
+            cur.execute("DELETE FROM animales WHERE chip=%s", (chip,))
             con.commit()
             cur.close()
