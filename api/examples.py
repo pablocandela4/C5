@@ -11,11 +11,11 @@ Ofrece un menú con opciones:
 Autor: [Tu Nombre]
 Fecha: [Fecha Actual]
 """
-
+import os
 import requests
 import sys
 
-URL_BASE = "http://127.0.0.1:5000"
+URL_BASE = os.getenv("API_URL", "http://127.0.0.1:5000")
 
 def ver_animales():
     """
