@@ -49,7 +49,7 @@ class MySQLManager(DBManager):
     # ---------- implementación CRUD ----------
     def insert_animal(self, datos: Dict[str, Any]) -> int:
         q = ("INSERT INTO animales (tipo, nombre, edad, chip, especie "
-             "VALUES (%(tipo)s, %(nombre)s, %(edad)s, %(chip)s, %(raza)s)")
+             "VALUES (%(tipo)s, %(nombre)s, %(edad)s, %(chip)s, %(especie)s)")
         with self._connect() as con:
             cur = con.cursor()
             cur.execute(q, datos)
