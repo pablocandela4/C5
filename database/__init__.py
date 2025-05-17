@@ -4,7 +4,7 @@ Fábrica sencilla: importa una variable de entorno DB_BACKEND
 `database.db`.
 """
 # database/__init__.py
-
+import os
 from .sqlite_manager import SQLiteManager
 from .mysql_manager   import MySQLManager
 
