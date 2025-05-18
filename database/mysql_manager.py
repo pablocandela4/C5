@@ -78,11 +78,23 @@ class MySQLManager(DBManager):
                 ON DELETE CASCADE
         ) ENGINE=InnoDB;
         """
+        ddl_alimentos = """
+        CREATE TABLE IF NOT EXISTS alimentos (
+            id               INT AUTO_INCREMENT PRIMARY KEY,
+            tipo_animal      VARCHAR(50)  NOT NULL,
+            alimento         VARCHAR(100) NOT NULL,
+            cantidad         INT          NOT NULL,
+            fecha_caducidad  DATE         NOT NULL,
+            coste            FLOAT        NOT NULL
+        ) ENGINE=InnoDB;
+        """
+        cur.execute(ddl_alimentos)
 
         with self._connect() as conn:
             cur = conn.cursor()
             cur.execute(ddl_animales)
             cur.execute(ddl_cuidados)
+            cur.execute(ddl_alimentos)
             cur.close()
 
     # ───────────────────────────── Animales ──────────────────────────────────
@@ -181,4 +193,57 @@ class MySQLManager(DBManager):
         with self._connect() as conn:
             cur = conn.cursor()
             cur.execute(q, (cuidado_id,))
+            cur.close()
+
+    # ───────────────────────────── Alimentos ──────────────────────────────────
+    def insertar_alimento(self, datos: Dict[str, Any]) -> int:
+        """
+        Inserta un nuevo alimento.
+        Keys esperadas: tipo_animal, alimento, cantidad, fecha_caducidad, coste.
+        """
+        q = """
+        INSERT INTO alimentos (tipo_animal, alimento, cantidad, fecha_caducidad, coste)
+        VALUES (%(tipo_animal)s, %(alimento)s, %(cantidad)s, %(fecha_caducidad)s, %(coste)s)
+        """
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(q, datos)
+            alimento_id = cur.lastrowid
+            cur.close()
+            return alimento_id
+
+    def obtener_alimentos(self) -> List[Dict[str, Any]]:
+        q = "SELECT * FROM alimentos"
+        with self._connect() as conn:
+            cur = conn.cursor(dictionary=True)
+            cur.execute(q)
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+
+    def obtener_alimento(self, alimento_id: int) -> Optional[Dict[str, Any]]:
+        q = "SELECT * FROM alimentos WHERE id = %s"
+        with self._connect() as conn:
+            cur = conn.cursor(dictionary=True)
+            cur.execute(q, (alimento_id,))
+            row = cur.fetchone()
+            cur.close()
+            return row
+
+    def actualizar_alimento(self, alimento_id: int, datos: Dict[str, Any]) -> None:
+        if not datos:
+            return
+        sets = ", ".join(f"{k} = %({k})s" for k in datos.keys())
+        datos["id"] = alimento_id
+        q = f"UPDATE alimentos SET {sets} WHERE id = %(id)s"
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(q, datos)
+            cur.close()
+
+    def eliminar_alimento(self, alimento_id: int) -> None:
+        q = "DELETE FROM alimentos WHERE id = %s"
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(q, (alimento_id,))
             cur.close()
