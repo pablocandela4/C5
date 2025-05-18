@@ -37,7 +37,7 @@ def listar_animales():
 @app.route("/animales", methods=["POST"])
 def crear_animal():
     """
-    Crea un nuevo animal.
+    Crea un nuevo animal
 
     Ejemplo de cuerpo JSON:
     {
