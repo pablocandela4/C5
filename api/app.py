@@ -9,7 +9,6 @@ en lugar de mantenerse sólo en memoria.
 from flask import Flask, request, jsonify
 from database import db
 
-
 app = Flask(__name__)
 
 
