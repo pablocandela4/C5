@@ -1,3 +1,6 @@
+import requests
+
+
 class Tratamiento:
     """
     Representa un tratamiento médico que se aplica a una animal.
@@ -22,6 +25,7 @@ class Tratamiento:
         self.fecha_inicio = fecha_inicio
         self.fecha_fin = fecha_fin
         self.coste = coste
+        requests.post("http://127.0.0.1:5000/tratamiento", json={"nombre": self.nombre, "fecha inicio": self.fecha_inicio, "fecha fin": self.fecha_fin, "coste": self.coste})
 
     def __str__(self):
         """

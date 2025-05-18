@@ -1,3 +1,6 @@
+import requests
+
+
 class Consulta:
     """
     Representa una consulta médica realizada a un animal por un veterinario.
@@ -22,6 +25,7 @@ class Consulta:
         self.veterinario = veterinario
         self.fecha = fecha
         self.diagnostico = diagnostico
+        requests.post("http://127.0.0.1:5000/tratamiento", json={"animal": self.animal, "veterinario": self.veterinario, "fecha": self.fecha, "diagnostico": self.diagnostico})
 
     def __str__(self):
         """
