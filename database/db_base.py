@@ -10,19 +10,18 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional
-
+from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
 # ──────────────────────── 1) Variables de entorno ────────────────────────────
 load_dotenv()
 
-DB_TYPE: str  = os.getenv("DB_TYPE", "mysql")      # «mysql» por defecto
-DB_HOST: str  = os.getenv("DB_HOST", "localhost")
-DB_PORT: int  = int(os.getenv("DB_PORT", 3306))
-DB_NAME: str  = os.getenv("DB_NAME", "clinica")
-DB_USER: str  = os.getenv("DB_USER", "")
-DB_PASS: str  = os.getenv("DB_PASS", "")
+DB_TYPE = os.getenv("DB_TYPE", "mysql")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 3306))
+DB_NAME = os.getenv("DB_NAME", "clinica")
+DB_USER = os.getenv("DB_USER", "")
+DB_PASS = os.getenv("DB_PASS", "")
 
 # ──────────────────────── 2) Interfaz genérica ───────────────────────────────
 class DBManager(ABC):
@@ -31,7 +30,7 @@ class DBManager(ABC):
     # ── Animales ────────────────────────────────────────────────────────────
     @abstractmethod
     def insert_animal(self, datos: Dict[str, Any]) -> int:
-        """Crea un animal y devuelve su ID (chip)."""                                # noqa: D401
+        """Crea un animal y devuelve su ID."""
         ...
 
     @abstractmethod
@@ -49,81 +48,95 @@ class DBManager(ABC):
         """Elimina el animal con ID `animal_id`."""
         ...
 
-    # ── Cuidados ────────────────────────────────────────────────────────────
+    # ── Dueños ──────────────────────────────────────────────────────────────
     @abstractmethod
-    def insert_cuidado(self, datos: Dict[str, Any]) -> int:
-        """
-        Inserta un cuidado programado.
-        `datos` debe contener: animal_id, fecha, tipo, estado (opcional), notas.
-        Devuelve el ID autogenerado del cuidado.
-        """
+    def insertar_dueno(self, datos: Dict[str, Any]) -> int:
         ...
 
     @abstractmethod
-    def get_cuidados(
-        self,
-        animal_id: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
-        """
-        Devuelve los cuidados.  
-        Si `animal_id` es `None`, devuelve todos; en caso contrario, solo
-        los asociados al animal indicado.
-        """
+    def obtener_duenos(self) -> List[Dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def obtener_dueno(self, dueno_id: int) -> Optional[Dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def actualizar_dueno(self, dueno_id: int, datos: Dict[str, Any]) -> None:
+        ...
+
+    @abstractmethod
+    def eliminar_dueno(self, dueno_id: int) -> None:
+        ...
+
+    # ── Veterinarios ────────────────────────────────────────────────────────
+    @abstractmethod
+    def insertar_veterinario(self, datos: Dict[str, Any]) -> int:
+        ...
+
+    @abstractmethod
+    def obtener_veterinarios(self) -> List[Dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def obtener_veterinario(self, colegiado_id: int) -> Optional[Dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def actualizar_veterinario(self, colegiado_id: int, datos: Dict[str, Any]) -> None:
+        ...
+
+    @abstractmethod
+    def eliminar_veterinario(self, colegiado_id: int) -> None:
+        ...
+
+    # ── Cuidados ────────────────────────────────────────────────────────────
+    @abstractmethod
+    def insert_cuidado(self, datos: Dict[str, Any]) -> int:
+        ...
+
+    @abstractmethod
+    def get_cuidados(self, animal_id: Optional[int] = None) -> List[Dict[str, Any]]:
         ...
 
     @abstractmethod
     def update_cuidado(self, cuidado_id: int, datos: Dict[str, Any]) -> None:
-        """Actualiza los campos indicados en `datos` para el cuidado `cuidado_id`."""
         ...
 
     @abstractmethod
     def delete_cuidado(self, cuidado_id: int) -> None:
-        """Elimina el cuidado con ID `cuidado_id`."""
         ...
 
-    # ---------- Alimentos ----------
+    # ── Alimentos ───────────────────────────────────────────────────────────
     @abstractmethod
     def insertar_alimento(self, datos: Dict[str, Any]) -> int:
-        """Inserta un nuevo alimento en la base de datos."""
         ...
 
     @abstractmethod
     def obtener_alimentos(self) -> List[Dict[str, Any]]:
-        """Obtiene todos los alimentos de la base de datos."""
         ...
 
     @abstractmethod
     def obtener_alimento(self, alimento_id: int) -> Optional[Dict[str, Any]]:
-        """Obtiene un alimento por su ID."""
         ...
 
     @abstractmethod
     def actualizar_alimento(self, alimento_id: int, datos: Dict[str, Any]) -> None:
-        """Actualiza la información de un alimento existente."""
         ...
 
     @abstractmethod
     def eliminar_alimento(self, alimento_id: int) -> None:
-        """Elimina un alimento de la base de datos."""
         ...
 
-
-    @abstractmethod
-    def delete_cuidado(self, cuidado_id: int) -> None:
-        """Elimina el cuidado con ID `cuidado_id`."""
-        ...
 
 # ──────────────────────── 3) Importa gestores concretos ──────────────────────
-from .mysql_manager import MySQLManager   # noqa: E402  (import después de ABC)
+from .mysql_manager import MySQLManager   # noqa: E402
 
 # ──────────────────────── 4) Factoría de gestores ────────────────────────────
 def get_db_manager() -> DBManager:
     """
     Devuelve una instancia del gestor adecuado según la variable `DB_TYPE`.
-
-    Por ahora solo está implementado MySQL.  Si quieres soporte para SQLite
-    u otros motores, crea un fichero `sqlite_manager.py` que herede de
-    `DBManager` e inclúyelo aquí.
+    Actualmente solo se soporta MySQL.
     """
     if DB_TYPE.lower() == "mysql":
         return MySQLManager(
