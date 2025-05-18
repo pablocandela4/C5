@@ -1,412 +1,142 @@
 """
-Base de datos para la clínica veterinaria - Interfaz común
+db_base.py
+
+Define la interfaz base (DBManager) que deben implementar los gestores de
+base de datos concretos (por ahora MySQL, pero extensible a SQLite u otros).
+También carga las variables de entorno y expone la factoría `get_db_manager()`.
 """
+
+from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
-# 1) Carga de variables de entorno
+# ──────────────────────── 1) Variables de entorno ────────────────────────────
 load_dotenv()
 
-DB_TYPE = os.getenv("DB_TYPE", "sqlite")
+DB_TYPE = os.getenv("DB_TYPE", "mysql")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = int(os.getenv("DB_PORT", 3306))
-DB_NAME = os.getenv("DB_NAME", "datos/clinica.db")
+DB_NAME = os.getenv("DB_NAME", "clinica")
 DB_USER = os.getenv("DB_USER", "")
 DB_PASS = os.getenv("DB_PASS", "")
 
-
-# 2) Define la interfaz base
+# ──────────────────────── 2) Interfaz genérica ───────────────────────────────
 class DBManager(ABC):
-    """
-    Interfaz para la gestión de la base de datos de la clínica veterinaria.
-    Define operaciones CRUD para animales, dueños y veterinarios.
-    """
+    """Interfaz CRUD que usan el resto de capas de la aplicación."""
+
+    # ── Animales ────────────────────────────────────────────────────────────
+    @abstractmethod
+    def insert_animal(self, datos: Dict[str, Any]) -> int:
+        """Crea un animal y devuelve su ID."""
+        ...
 
     @abstractmethod
-    def insertar_animal(self, datos: Dict[str, Any]) -> int:
-        """
-        Inserta un nuevo animal en la base de datos.
-
-        Parameters
-        ----------
-        datos : Dict[str, Any]
-            Diccionario con los datos del animal a insertar.
-            Debe contener las claves: 'especie', 'nombre'.
-            Puede contener opcionalmente: 'edad', 'chip', 'raza'.
-
-        Returns
-        -------
-        int
-            El ID del animal insertado.
-
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la inserción.
-        """
-        pass
+    def get_animales(self) -> List[Dict[str, Any]]:
+        """Devuelve todos los animales como lista de dicts."""
+        ...
 
     @abstractmethod
-    def obtener_animales(self) -> List[Dict[str, Any]]:
-        """
-        Obtiene todos los animales de la base de datos. List.
-
-        Returns
-        -------
-        List[Dict[str, Any]]
-            Una lista de diccionarios, donde cada diccionario representa un animal.
-            Las claves de cada diccionario son: 'id', 'especie', 'nombre', 'edad', 'chip', 'raza'.
-            Si no hay animales, devuelve una lista vacía.
-
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la consulta.
-        """
-        pass
+    def update_animal(self, animal_id: int, datos: Dict[str, Any]) -> None:
+        """Actualiza los campos indicados en `datos` para el animal `animal_id`."""
+        ...
 
     @abstractmethod
-    def obtener_animal(self, animal_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Obtiene un animal por su ID.
-        Parameters
-        ----------
-        animal_id: int
-            el id del animal
+    def delete_animal(self, animal_id: int) -> None:
+        """Elimina el animal con ID `animal_id`."""
+        ...
 
-        Returns
-        -------
-        Optional[Dict[str, Any]]:
-            Un diccionario representando al animal si se encuentra, None si no.
-        """
-        pass
-
-    @abstractmethod
-    def actualizar_animal(self, animal_id: int, datos: Dict[str, Any]) -> None:
-        """
-        Actualiza la información de un animal existente.
-
-        Parameters
-        ----------
-        animal_id : int
-            ID del animal a actualizar.
-        datos : Dict[str, Any]
-            Diccionario con los datos a actualizar.  Puede contener cualquier
-            combinación de las claves: 'especie', 'nombre', 'edad', 'chip', 'raza'.
-
-        Raises
-        ------
-        Exception
-            Si el animal no existe o si ocurre un error durante la actualización.
-        """
-        pass
-
-    @abstractmethod
-    def eliminar_animal(self, animal_id: int) -> None:
-        """
-        Elimina un animal de la base de datos.
-
-        Parameters
-        ----------
-        animal_id : int
-            ID del animal a eliminar.
-
-        Raises
-        ------
-        Exception
-            Si el animal no existe o si ocurre un error durante la eliminación.
-        """
-        pass
-
+    # ── Dueños ──────────────────────────────────────────────────────────────
     @abstractmethod
     def insertar_dueno(self, datos: Dict[str, Any]) -> int:
-        """
-        Inserta un nuevo dueño en la base de datos.
-
-        Parameters
-        ----------
-        datos : Dict[str, Any]
-            Diccionario con los datos del dueño a insertar.
-            Debe contener las claves: 'nombre', 'nif'.
-            Puede contener opcionalmente: 'direccion', 'telefono'.
-
-        Returns
-        -------
-        int
-            El ID del dueño insertado.
-
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la inserción.
-        """
-        pass
+        ...
 
     @abstractmethod
     def obtener_duenos(self) -> List[Dict[str, Any]]:
-        """
-        Obtiene todos los dueños de la base de datos.
-
-        Returns
-        -------
-        List[Dict[str, Any]]
-            Una lista de diccionarios, donde cada diccionario representa un dueño.
-            Las claves de cada diccionario son: 'id', 'nombre', 'nif', 'direccion', 'telefono'.
-            Si no hay dueños, devuelve una lista vacía.
-
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la consulta.
-        """
-        pass
+        ...
 
     @abstractmethod
     def obtener_dueno(self, dueno_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Obtiene un dueño por su ID.
-        Parameters
-        ----------
-        dueno_id: int
-            el id del dueño
-
-        Returns
-        -------
-        Optional[Dict[str, Any]]:
-            Un diccionario representando al dueño si se encuentra, None si no.
-        """
-        pass
+        ...
 
     @abstractmethod
     def actualizar_dueno(self, dueno_id: int, datos: Dict[str, Any]) -> None:
-        """
-        Actualiza la información de un dueño existente.
-
-        Parameters
-        ----------
-        dueno_id : int
-            ID del dueño a actualizar.
-        datos : Dict[str, Any]
-            Diccionario con los datos a actualizar.  Puede contener cualquier
-            combinación de las claves: 'nombre', 'nif', 'direccion', 'telefono'.
-
-        Raises
-        ------
-        Exception
-            Si el dueño no existe o si ocurre un error durante la actualización.
-        """
-        pass
+        ...
 
     @abstractmethod
     def eliminar_dueno(self, dueno_id: int) -> None:
-        """
-        Elimina un dueño de la base de datos.
+        ...
 
-        Parameters
-        ----------
-        dueno_id : int
-            ID del dueño a eliminar.
-
-        Raises
-        ------
-        Exception
-            Si el dueño no existe o si ocurre un error durante la eliminación.
-        """
-        pass
-
+    # ── Veterinarios ────────────────────────────────────────────────────────
     @abstractmethod
     def insertar_veterinario(self, datos: Dict[str, Any]) -> int:
-        """
-        Inserta un nuevo veterinario en la base de datos.
-
-        Parameters
-        ----------
-        datos : Dict[str, Any]
-            Diccionario con los datos del veterinario a insertar.
-            Debe contener las claves: 'nombre', 'colegiado_id'.
-            Puede contener opcionalmente: 'nif', 'direccion', 'telefono'.
-
-        Returns
-        -------
-        int
-            El ID del veterinario insertado.
-
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la inserción.
-        """
-        pass
+        ...
 
     @abstractmethod
     def obtener_veterinarios(self) -> List[Dict[str, Any]]:
-        """
-        Obtiene todos los veterinarios de la base de datos.
-
-        Returns
-        -------
-        List[Dict[str, Any]]
-            Una lista de diccionarios, donde cada diccionario representa un veterinario.
-            Las claves del diccionario son: 'id', 'nombre', 'nif', 'direccion', 'telefono', 'colegiado_id'.
-            Si no hay veterinarios, devuelve una lista vacía.
-
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la consulta.
-        """
-        pass
+        ...
 
     @abstractmethod
     def obtener_veterinario(self, colegiado_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Obtiene un veterinario por su colegiado_id.
-        Parameters
-        ----------
-        colegiado_id: int
-            el colegiado_id del veterinario
-
-        Returns
-        -------
-        Optional[Dict[str, Any]]:
-            Un diccionario representando al veterinario si se encuentra, None si no.
-        """
-        pass
+        ...
 
     @abstractmethod
     def actualizar_veterinario(self, colegiado_id: int, datos: Dict[str, Any]) -> None:
-        """
-        Actualiza la información de un veterinario existente.
-
-        Parameters
-        ----------
-        colegiado_id : int
-            ID del veterinario a actualizar.
-        datos : Dict[str, Any]
-            Diccionario con los datos a actualizar.  Puede contener cualquier
-            combinación de las claves: 'nombre', 'nif', 'direccion', 'telefono', 'colegiado_id'.
-
-        Raises
-        ------
-        Exception
-            Si el veterinario no existe o si ocurre un error durante la actualización.
-        """
-        pass
+        ...
 
     @abstractmethod
     def eliminar_veterinario(self, colegiado_id: int) -> None:
-        """
-        Elimina un veterinario de la base de datos.
+        ...
 
-        Parameters
-        ----------
-        colegiado_id : int
-            ID del veterinario a eliminar.
-
-        Raises
-        ------
-        Exception
-            Si el veterinario no existe o si ocurre un error durante la eliminación.
-        """
-        pass
+    # ── Cuidados ────────────────────────────────────────────────────────────
+    @abstractmethod
+    def insert_cuidado(self, datos: Dict[str, Any]) -> int:
+        ...
 
     @abstractmethod
+    def get_cuidados(self, animal_id: Optional[int] = None) -> List[Dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def update_cuidado(self, cuidado_id: int, datos: Dict[str, Any]) -> None:
+        ...
+
+    @abstractmethod
+    def delete_cuidado(self, cuidado_id: int) -> None:
+        ...
+
+    # ── Alimentos ───────────────────────────────────────────────────────────
+    @abstractmethod
     def insertar_alimento(self, datos: Dict[str, Any]) -> int:
-        """
-        Inserta un nuevo alimento en la base de datos.
-        Parameters
-        ----------
-        datos : Dict[str, Any]
-            Diccionario con los datos del alimento a insertar.
-            Debe contener las claves: 'tipo_animal', 'alimento', 'cantidad', 'fecha_caducidad', 'coste'.
-        Returns
-        -------
-        int
-            El ID del alimento insertado.
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la inserción.
-        """
-        pass
+        ...
 
     @abstractmethod
     def obtener_alimentos(self) -> List[Dict[str, Any]]:
-        """
-        Obtiene todos los alimentos de la base de datos.
-        Returns
-        -------
-        List[Dict[str, Any]]
-            Una lista de diccionarios, donde cada diccionario representa un alimento.
-            Las claves de cada diccionario son: 'id', 'tipo_animal', 'alimento', 'cantidad', 'fecha_caducidad', 'coste'.
-            Si no hay alimentos, devuelve una lista vacía.
-        Raises
-        ------
-        Exception
-            Si ocurre un error durante la consulta.
-        """
-        pass
+        ...
 
     @abstractmethod
     def obtener_alimento(self, alimento_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Obtiene un alimento por su ID.
-        Parameters
-        ----------
-        alimento_id : int
-            El id del alimento.
-        Returns
-        -------
-        Optional[Dict[str, Any]]
-            Un diccionario representando al alimento si se encuentra, None si no.
-        """
-        pass
+        ...
 
     @abstractmethod
     def actualizar_alimento(self, alimento_id: int, datos: Dict[str, Any]) -> None:
-        """
-        Actualiza la información de un alimento existente.
-        Parameters
-        ----------
-        alimento_id : int
-            ID del alimento a actualizar.
-        datos : Dict[str, Any]
-            Diccionario con los datos a actualizar. Puede contener cualquier combinación
-            de las claves: 'tipo_animal', 'alimento', 'cantidad', 'fecha_caducidad', 'coste'.
-        Raises
-        ------
-        Exception
-            Si el alimento no existe o si ocurre un error durante la actualización.
-        """
-        pass
+        ...
 
     @abstractmethod
     def eliminar_alimento(self, alimento_id: int) -> None:
-        """
-        Elimina un alimento de la base de datos.
-        Parameters
-        ----------
-        alimento_id : int
-            ID del alimento a eliminar.
-        Raises
-        ------
-        Exception
-            Si el alimento no existe o si ocurre un error durante la eliminación.
-        """
-        pass
+        ...
 
 
-# 3) Importa los gestores concretos *después* de definir DBManager
-from .mysql_manager import MySQLManager
+# ──────────────────────── 3) Importa gestores concretos ──────────────────────
+from .mysql_manager import MySQLManager   # noqa: E402
 
-
-# 4) La factoría que escoge el gestor según DB_TYPE
+# ──────────────────────── 4) Factoría de gestores ────────────────────────────
 def get_db_manager() -> DBManager:
     """
-    Devuelve una instancia de SQLiteManager o MySQLManager según .env.
+    Devuelve una instancia del gestor adecuado según la variable `DB_TYPE`.
+    Actualmente solo se soporta MySQL.
     """
     if DB_TYPE.lower() == "mysql":
         return MySQLManager(
@@ -414,8 +144,10 @@ def get_db_manager() -> DBManager:
             port=DB_PORT,
             user=DB_USER,
             password=DB_PASS,
-            database=DB_NAME
+            database=DB_NAME,
         )
-    else:
-        # Si no es MySQL, deberías tener una alternativa
-        raise RuntimeError(f"Tipo de base de datos no soportado: {DB_TYPE}. Solo está configurado para MySQL")
+
+    raise RuntimeError(
+        f"DB_TYPE='{DB_TYPE}' no está soportado. "
+        "Implementa un gestor concreto o cambia la variable de entorno."
+    )

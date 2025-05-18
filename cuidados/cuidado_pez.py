@@ -1,19 +1,15 @@
 """
 cuidado_pez.py
 
-Define la clase CuidadoPez, que representa un cuidado específico para peces.
-
-Hereda de:
-    CuidadoProgramado
+Cuidado específico para peces.
 """
 
 from .cuidado_base import CuidadoProgramado
 
-class CuidadoPez(CuidadoProgramado):
-    def realizar_cuidado(self):
-        """
-        Realiza el cuidado específico para peces.
 
-        Imprime un mensaje indicando que el cuidado ha sido realizado.
-        """
-        print(f"Ejecutando '{self.tipo_cuidado}' al pez (ID: {self.animal_id}). ¡Agua limpia y peces felices!")
+class CuidadoPez(CuidadoProgramado):
+    """Aplica un cuidado a un pez."""
+
+    def realizar_cuidado(self) -> None:
+        self.actualizar_estado("realizado")
+        print(f"🐟 Cuidado '{self.tipo_cuidado}' aplicado al pez (ID {self.animal_id}). ¡Agua limpia y peces felices!")
