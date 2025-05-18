@@ -37,6 +37,92 @@ class DBManager(ABC):
     @abstractmethod
     def delete_animal(self, animal_id: int) -> None: ...
 
+    # ---------- Alimentos ----------
+    @abstractmethod
+    def insertar_alimento(self, datos: Dict[str, Any]) -> int:
+        """
+        Inserta un nuevo alimento en la base de datos.
+        Parameters
+        ----------
+        datos : Dict[str, Any]
+            Diccionario con los datos del alimento a insertar.
+            Debe contener las claves: 'tipo_animal', 'alimento', 'cantidad', 'fecha_caducidad', 'coste'.
+        Returns
+        -------
+        int
+            El ID del alimento insertado.
+        Raises
+        ------
+        Exception
+            Si ocurre un error durante la inserción.
+        """
+        pass
+
+    @abstractmethod
+    def obtener_alimentos(self) -> List[Dict[str, Any]]:
+        """
+        Obtiene todos los alimentos de la base de datos.
+        Returns
+        -------
+        List[Dict[str, Any]]
+            Una lista de diccionarios, donde cada diccionario representa un alimento.
+            Las claves de cada diccionario son: 'id', 'tipo_animal', 'alimento', 'cantidad', 'fecha_caducidad', 'coste'.
+            Si no hay alimentos, devuelve una lista vacía.
+        Raises
+        ------
+        Exception
+            Si ocurre un error durante la consulta.
+        """
+        pass
+
+    @abstractmethod
+    def obtener_alimento(self, alimento_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Obtiene un alimento por su ID.
+        Parameters
+        ----------
+        alimento_id : int
+            El id del alimento.
+        Returns
+        -------
+        Optional[Dict[str, Any]]
+            Un diccionario representando al alimento si se encuentra, None si no.
+        """
+        pass
+
+    @abstractmethod
+    def actualizar_alimento(self, alimento_id: int, datos: Dict[str, Any]) -> None:
+        """
+        Actualiza la información de un alimento existente.
+        Parameters
+        ----------
+        alimento_id : int
+            ID del alimento a actualizar.
+        datos : Dict[str, Any]
+            Diccionario con los datos a actualizar. Puede contener cualquier combinación
+            de las claves: 'tipo_animal', 'alimento', 'cantidad', 'fecha_caducidad', 'coste'.
+        Raises
+        ------
+        Exception
+            Si el alimento no existe o si ocurre un error durante la actualización.
+        """
+        pass
+
+    @abstractmethod
+    def eliminar_alimento(self, alimento_id: int) -> None:
+        """
+        Elimina un alimento de la base de datos.
+        Parameters
+        ----------
+        alimento_id : int
+            ID del alimento a eliminar.
+        Raises
+        ------
+        Exception
+            Si el alimento no existe o si ocurre un error durante la eliminación.
+        """
+        pass
+
 
 # 3) Importa los gestores concretos *después* de definir DBManager
 from .mysql_manager import MySQLManager
