@@ -81,6 +81,38 @@ class DBManager(ABC):
         """Elimina el cuidado con ID `cuidado_id`."""
         ...
 
+    # ---------- Alimentos ----------
+    @abstractmethod
+    def insertar_alimento(self, datos: Dict[str, Any]) -> int:
+        """Inserta un nuevo alimento en la base de datos."""
+        ...
+
+    @abstractmethod
+    def obtener_alimentos(self) -> List[Dict[str, Any]]:
+        """Obtiene todos los alimentos de la base de datos."""
+        ...
+
+    @abstractmethod
+    def obtener_alimento(self, alimento_id: int) -> Optional[Dict[str, Any]]:
+        """Obtiene un alimento por su ID."""
+        ...
+
+    @abstractmethod
+    def actualizar_alimento(self, alimento_id: int, datos: Dict[str, Any]) -> None:
+        """Actualiza la información de un alimento existente."""
+        ...
+
+    @abstractmethod
+    def eliminar_alimento(self, alimento_id: int) -> None:
+        """Elimina un alimento de la base de datos."""
+        ...
+
+
+    @abstractmethod
+    def delete_cuidado(self, cuidado_id: int) -> None:
+        """Elimina el cuidado con ID `cuidado_id`."""
+        ...
+
 # ──────────────────────── 3) Importa gestores concretos ──────────────────────
 from .mysql_manager import MySQLManager   # noqa: E402  (import después de ABC)
 

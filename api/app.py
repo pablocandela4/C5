@@ -173,6 +173,55 @@ def borrar_cuidado(cuidado_id: int):
     return {"mensaje": "Cuidado eliminado"}, 200
 
 
+# ------------------- CRUD ALIMENTO -------------------
+@app.route("/alimento", methods=["GET"])
+def listar_alimentos():
+    """Devuelve un listado JSON con todos los alimentos."""
+    return jsonify(db.listar_alimentos()), 200
+
+@app.route("/alimento", methods=["POST"])
+def crear_alimento():
+    """Crea un nuevo alimento."""
+    data = request.get_json(force=True)
+    if not data:
+        return {"error": "No se recibió JSON"}, 400
+
+    tipo_animal = data.get("tipo_animal")
+    alimento = data.get("alimento")
+    cantidad = data.get("cantidad")
+    fecha_caducidad = data.get("fecha_caducidad")
+    coste = data.get("coste")
+
+    if not tipo_animal or not alimento or cantidad is None:
+        return {"error": "Campos 'tipo_animal', 'alimento' y 'cantidad' son obligatorios"}, 400
+
+    alimento_id = db.insert_alimento({
+        "tipo_animal": tipo_animal,
+        "alimento": alimento,
+        "cantidad": cantidad,
+        "fecha_caducidad": fecha_caducidad,
+        "coste": coste,
+    })
+    return {"mensaje": "Alimento creado", "id": alimento_id}, 200
+
+
+@app.route("/alimento/<int:alimento_id>", methods=["PUT"])
+def actualizar_alimento(alimento_id: int):
+    """Actualiza la información de un alimento."""
+    cambios = request.get_json(force=True) or {}
+    if not cambios:
+        return {"error": "JSON vacío"}, 400
+    db.update_alimento(alimento_id, cambios)
+    return {"mensaje": "Alimento actualizado"}, 200
+
+
+@app.route("/alimento/<int:alimento_id>", methods=["DELETE"])
+def borrar_alimento(alimento_id: int):
+    """Elimina un alimento."""
+    db.delete_alimento(alimento_id)
+    return {"mensaje": "Alimento eliminado"}, 200
+
+
 # ------------------- RUN -------------------
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
