@@ -1,3 +1,6 @@
+import requests
+
+
 class Vacuna:
     """
     Representa una vacuna administrada a un animal.
@@ -16,6 +19,7 @@ class Vacuna:
         """
         self.nombre = nombre
         self.fecha = fecha
+        requests.post("http://127.0.0.1:5000/vacuna", json={"nombre": self.nombre, "fecha": self.fecha})
 
     def __str__(self):
         """

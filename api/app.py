@@ -222,6 +222,140 @@ def borrar_alimento(alimento_id: int):
     return {"mensaje": "Alimento eliminado"}, 200
 
 
+# ------------------- CRUD VACUNAS -------------------
+@app.route("/vacuna", methods=["GET"])
+def listar_vacunas():
+    """Devuelve un listado JSON con todas las vacunas."""
+    return jsonify(db.listar_vacunas()), 200
+
+
+@app.route("/vacuna", methods=["POST"])
+def crear_vacuna():
+    """Crea una nueva vacuna."""
+    data = request.get_json(force=True)
+    if not data:
+        return {"error": "No se recibió JSON"}, 400
+
+    nombre = data.get("nombre")
+    fecha = data.get("fecha")
+
+    if not nombre or not fecha:
+        return {"error": "Campos 'nombre' y 'fecha' son obligatorios"}, 400
+
+    vacuna_id = db.insert_vacuna({
+        "nombre": nombre,
+        "fecha": fecha,
+    })
+    return {"mensaje": "Vacuna creada", "id": vacuna_id}, 200
+
+
+@app.route("/vacuna/<int:vacuna_id>", methods=["PUT"])
+def actualizar_vacuna(vacuna_id: int):
+    """Actualiza la información de una vacuna."""
+    cambios = request.get_json(force=True) or {}
+    if not cambios:
+        return {"error": "JSON vacío"}, 400
+    db.update_vacuna(vacuna_id, cambios)
+    return {"mensaje": "Vacuna actualizada"}, 200
+
+
+@app.route("/vacuna/<int:vacuna_id>", methods=["DELETE"])
+def borrar_vacuna(vacuna_id: int):
+    """Elimina una vacuna."""
+    db.delete_vacuna(vacuna_id)
+    return {"mensaje": "Vacuna eliminada"}, 200
+
+
+# ------------------- CRUD TRATAMIENTO -------------------
+@app.route("/tratamiento", methods=["GET"])
+def listar_tratamientos():
+    """Devuelve un listado JSON con todos los tratamientos."""
+    return jsonify(db.listar_tratamientos()), 200
+
+@app.route("/tratamiento", methods=["POST"])
+def crear_tratamiento():
+    """Crea un nuevo tratamiento."""
+    data = request.get_json(force=True)
+    if not data:
+        return {"error": "No se recibió JSON"}, 400
+
+    nombre = data.get("nombre")
+    fecha_inicio = data.get("fecha_inicio")
+    fecha_fin = data.get("fecha_fin")
+    coste = data.get("coste")
+
+    if not nombre or not fecha_inicio or not fecha_fin or coste is None:
+        return {"error": "Todos los campos son obligatorios"}, 400
+
+    tratamiento_id = db.insert_tratamiento({
+        "nombre": nombre,
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
+        "coste": coste,
+    })
+    return {"mensaje": "Tratamiento creado", "id": tratamiento_id}, 200
+
+@app.route("/tratamiento/<int:tratamiento_id>", methods=["PUT"])
+def actualizar_tratamiento(tratamiento_id: int):
+    """Actualiza la información de un tratamiento."""
+    cambios = request.get_json(force=True) or {}
+    if not cambios:
+        return {"error": "JSON vacío"}, 400
+    db.update_tratamiento(tratamiento_id, cambios)
+    return {"mensaje": "Tratamiento actualizado"}, 200
+
+@app.route("/tratamiento/<int:tratamiento_id>", methods=["DELETE"])
+def borrar_tratamiento(tratamiento_id: int):
+    """Elimina un tratamiento."""
+    db.delete_tratamiento(tratamiento_id)
+    return {"mensaje": "Tratamiento eliminado"}, 200
+
+
+# ------------------- CRUD CONSULTA -------------------
+@app.route("/consulta", methods=["GET"])
+def listar_consultas():
+    """Devuelve un listado JSON con todas las consultas."""
+    return jsonify(db.listar_consultas()), 200
+
+@app.route("/consulta", methods=["POST"])
+def crear_consulta():
+    """Crea una nueva consulta."""
+    data = request.get_json(force=True)
+    if not data:
+        return {"error": "No se recibió JSON"}, 400
+
+    animal = data.get("animal")
+    veterinario = data.get("veterinario")
+    fecha = data.get("fecha")
+    diagnostico = data.get("diagnostico")
+
+    if not animal or not veterinario or not fecha or not diagnostico:
+        return {"error": "Todos los campos son obligatorios"}, 400
+
+    consulta_id = db.insert_consulta({
+        "animal": animal,
+        "veterinario": veterinario,
+        "fecha": fecha,
+        "diagnostico": diagnostico,
+    })
+    return {"mensaje": "Consulta creada", "id": consulta_id}, 200
+
+@app.route("/consulta/<int:consulta_id>", methods=["PUT"])
+def actualizar_consulta(consulta_id: int):
+    """Actualiza la información de una consulta."""
+    cambios = request.get_json(force=True) or {}
+    if not cambios:
+        return {"error": "JSON vacío"}, 400
+    db.update_consulta(consulta_id, cambios)
+    return {"mensaje": "Consulta actualizada"}, 200
+
+@app.route("/consulta/<int:consulta_id>", methods=["DELETE"])
+def borrar_consulta(consulta_id: int):
+    """Elimina una consulta."""
+    db.delete_consulta(consulta_id)
+    return {"mensaje": "Consulta eliminada"}, 200
+
+
 # ------------------- RUN -------------------
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

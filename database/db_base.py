@@ -128,6 +128,69 @@ class DBManager(ABC):
     def eliminar_alimento(self, alimento_id: int) -> None:
         ...
 
+    # ── Vacunas ──────────────────────────────────────────────────────────────
+    @abstractmethod
+    def insert_vacuna(self, datos: Dict[str, Any]) -> int:
+        """Crea una vacuna y devuelve su ID."""
+        ...
+
+    @abstractmethod
+    def listar_vacunas(self) -> List[Dict[str, Any]]:
+        """Devuelve todas las vacunas como lista de dicts."""
+        ...
+
+    @abstractmethod
+    def update_vacuna(self, vacuna_id: int, datos: Dict[str, Any]) -> None:
+        """Actualiza los campos indicados en `datos` para la vacuna `vacuna_id`."""
+        ...
+
+    @abstractmethod
+    def delete_vacuna(self, vacuna_id: int) -> None:
+        """Elimina la vacuna con ID `vacuna_id`."""
+        ...
+
+    # ── Tratamientos ─────────────────────────────────────────────────────────
+    @abstractmethod
+    def insert_tratamiento(self, datos: Dict[str, Any]) -> int:
+        """Crea un tratamiento y devuelve su ID."""
+        ...
+
+    @abstractmethod
+    def listar_tratamientos(self) -> List[Dict[str, Any]]:
+        """Devuelve todos los tratamientos como lista de dicts."""
+        ...
+
+    @abstractmethod
+    def update_tratamiento(self, tratamiento_id: int, datos: Dict[str, Any]) -> None:
+        """Actualiza los campos indicados en `datos` para el tratamiento `tratamiento_id`."""
+        ...
+
+    @abstractmethod
+    def delete_tratamiento(self, tratamiento_id: int) -> None:
+        """Elimina el tratamiento con ID `tratamiento_id`."""
+        ...
+
+    # ── Consultas ────────────────────────────────────────────────────────────
+    @abstractmethod
+    def insert_consulta(self, datos: Dict[str, Any]) -> int:
+        """Crea una consulta y devuelve su ID."""
+        ...
+
+    @abstractmethod
+    def listar_consultas(self) -> List[Dict[str, Any]]:
+        """Devuelve todas las consultas como lista de dicts."""
+        ...
+
+    @abstractmethod
+    def update_consulta(self, consulta_id: int, datos: Dict[str, Any]) -> None:
+        """Actualiza los campos indicados en `datos` para la consulta `consulta_id`."""
+        ...
+
+    @abstractmethod
+    def delete_consulta(self, consulta_id: int) -> None:
+        """Elimina la consulta con ID `consulta_id`."""
+        ...
+
 
 # ──────────────────────── 3) Importa gestores concretos ──────────────────────
 from .mysql_manager import MySQLManager   # noqa: E402
