@@ -9,6 +9,7 @@ así como un pequeño bloque de ejemplo para uso práctico al ejecutar el archiv
 from alimentacion.alimentacion import CatalogoAlimentos, Alimento
 from salud.vacunacion import CartillaVacunacion, Vacuna
 from cuidados.cuidado_base import CuidadoProgramado
+import requests
 from datetime import datetime
 
 
@@ -162,7 +163,7 @@ class Perro(Animal):
     def __init__(self, chip, nombre, edad, raza):
         super().__init__(chip, nombre, "Perro", edad)
         self.raza = raza
-
+        requests.post("http://127.0.0.1:5000/animales", json={"chip":self.chip, "nombre":self.nombre, "edad":self.edad,"raza":self.raza, "especie":self.especie})
     def __str__(self):
         """
         Representación del perro en formato string, con su información básica.
@@ -187,7 +188,7 @@ class Gato(Animal):
     def __init__(self, chip, nombre, edad, raza):
         super().__init__(chip, nombre, "Gato", edad)
         self.raza = raza
-
+        requests.post("http://127.0.0.1:5000/animales", json={"chip":self.chip, "nombre":self.nombre, "edad": self.edad,"raza":self.raza,"especie":self.especie})
     def __str__(self):
         """
         Representación del gato en formato string.
@@ -211,7 +212,7 @@ class Ave(Animal):
     """
     def __init__(self, nombre, edad):
         super().__init__(None, nombre, "Ave", edad, requiere_cartilla=False)
-
+        requests.post("http://127.0.0.1:5000/animales", json={"chip":self.chip, "nombre":self.nombre,"edad": self.edad, "especie":self.especie})
     def __str__(self):
         """
         Representación del ave en formato string.
@@ -233,7 +234,7 @@ class Pez(Animal):
     """
     def __init__(self, nombre, edad):
         super().__init__(None, nombre, "Pez", edad, requiere_cartilla=False)
-
+        requests.post("http://127.0.0.1:5000/animales", json={"chip":self.chip, "nombre":self.nombre, "edad":self.edad,"especie": self.especie})
     def __str__(self):
         """
         Representación del pez en formato string.

@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 
+import requests
+
+
 class Persona(ABC):
     """
     Clase abstracta base que representa una persona.
@@ -78,6 +81,7 @@ class Dueno(Persona):
         """
         super().__init__(nombre, nif, direccion, telefono)
         self.animales = []
+        requests.post("http://127.0.0.1:5000/dueno",json={"nombre": self.nombre, "nif": self.nif, "direccion": self.direccion, "telefono": self.telefono})
 
     def agregar_animal(self, animal):
         """
@@ -134,6 +138,8 @@ class Veterinario(Persona):
         super().__init__(nombre, nif, direccion, telefono)
         self.colegiado_id = colegiado_id
         self.consultas = []
+        requests.post("http://127.0.0.1:5000/veterinario",
+                      json={"nombre": self.nombre, "nif": self.nif, "direccion": self.direccion,"telefono": self.telefono, "colegiado_id": self.colegiado_id})
 
     def __str__(self):
         """
@@ -165,4 +171,4 @@ class Veterinario(Persona):
         Args:
             consulta (Consulta): Consulta realizada al animal.
         """
-        self.consultas.append(consulta)    
+        self.consultas.append(consulta)

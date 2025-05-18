@@ -9,84 +9,80 @@ en lugar de mantenerse sólo en memoria.
 from flask import Flask, request, jsonify
 from database import db
 
-# (Opcional) si quieres seguir usando las clases para validar o procesar:
-from animales.animal import Perro, Gato, Ave, Pez
 
 app = Flask(__name__)
 
 
-# ---------------------------------------------------------------------------
-# RUTAS BÁSICAS
-# ---------------------------------------------------------------------------
-
 @app.route("/")
 def home():
     """GET / → Mensaje de bienvenida."""
-    return "🐾 Bienvenido a la API de la Clínica Veterinaria"
+    return "Bienvenida a la Clínica Veterinaria"
 
 
-# ---------------------------------------------------------------------------
-# CRUD ANIMALES
-# ---------------------------------------------------------------------------
 
 @app.route("/animales", methods=["GET"])
 def listar_animales():
     """
-    GET /animales
     Devuelve un listado JSON con los animales almacenados en la BD.
+
+    Returns
+    -------
+    json : list
+        Listado de animales en formato JSON.
+    int
+        Código de estado HTTP 200 (OK).
     """
-    return jsonify(db.get_animales()), 200
+    return jsonify(db.listar_animales()), 200
 
 
 @app.route("/animales", methods=["POST"])
 def crear_animal():
     """
-    POST /animales
-    Crea un nuevo animal. Ejemplo de cuerpo JSON:
+    Crea un nuevo animal.
 
+    Ejemplo de cuerpo JSON:
     {
       "tipo": "perro",
       "chip": "1234",
       "nombre": "Fido",
       "edad": 4,
-      "raza": "Labrador"
     }
+
     Campos mínimos: tipo, nombre
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito e ID del animal creado, o mensaje de error.
+    int
+        Código de estado HTTP 200 (OK) o 400 (Bad Request).
     """
     data = request.get_json(force=True)
     if not data:
         return {"error": "No se recibió JSON"}, 400
 
-    tipo = data.get("tipo", "").lower()
+    chip = data.get("chip", "")
     nombre = data.get("nombre")
-    if not nombre or not tipo:
-        return {"error": "Campos 'tipo' y 'nombre' son obligatorios"}, 400
+    edad = data.get("edad")
+    raza = data.get("raza")
+    especie = data.get("especie")
+    if not nombre or not especie:
+        return {"error": "Campos 'especie' y 'nombre' son obligatorios"}, 400
 
-    # --- (opcional) validación rápida usando las clases ya definidas ---
-    try:
-        match tipo:
-            case "perro":
-                _ = Perro(data.get("chip"), nombre, data.get("edad", 0), data.get("raza", ""))
-            case "gato":
-                _ = Gato(data.get("chip"), nombre, data.get("edad", 0), data.get("raza", ""))
-            case "ave":
-                _ = Ave(nombre, data.get("edad", 0))
-            case "pez":
-                _ = Pez(nombre, data.get("edad", 0))
-            case _:
-                return {"error": f"Tipo de animal '{tipo}' no reconocido"}, 400
-    except Exception as e:
-        return {"error": str(e)}, 400
-    # ------------------------------------------------------------------
 
-    # Insertamos en BD
+    if especie.lower() not in ["perro", "gato", "ave", "pez"]:
+        return {"error": f"Tipo de animal '{especie}' no reconocido"}, 400
+
+
+
+    # Inserta un animal en la base de datos dados unos valores
     animal_id = db.insert_animal(
         {
-            "tipo": tipo,
+            "especie": especie,
             "nombre": nombre,
-            "edad": data.get("edad"),
-            "chip": data.get("chip"),
-            "raza": data.get("raza"),
+            "edad": edad,
+            "chip": chip,
+            "raza": raza,
         }
     )
     return {"mensaje": "Animal creado", "id": animal_id}, 200
@@ -95,8 +91,21 @@ def crear_animal():
 @app.route("/animales/<int:animal_id>", methods=["PUT"])
 def actualizar_animal(animal_id: int):
     """
-    PUT /animales/<id>
+    Actualiza un animal existente.
+
+    Parameters
+    ----------
+    animal_id : int
+        ID del animal a actualizar.
+
     Cuerpo JSON con los campos a modificar (nombre, edad, raza, chip…).
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito o mensaje de error.
+    int
+        Código de estado HTTP 200 (OK) o 400 (Bad Request).
     """
     cambios = request.get_json(force=True) or {}
     if not cambios:
@@ -108,12 +117,227 @@ def actualizar_animal(animal_id: int):
 
 @app.route("/animales/<int:animal_id>", methods=["DELETE"])
 def borrar_animal(animal_id: int):
-    """DELETE /animales/<id> → elimina registro."""
+    """
+    Elimina un animal.
+
+    Parameters
+    ----------
+    animal_id : int
+        ID del animal a eliminar.
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito.
+    int
+        Código de estado HTTP 200 (OK).
+    """
     db.delete_animal(animal_id)
     return {"mensaje": "Animal eliminado"}, 200
 
 
-# ---------------------------------------------------------------------------
+# PERSONA DUEÑO
+
+@app.route("/dueno", methods=["GET"])
+def listar_dueno():
+    """
+    Devuelve un listado JSON con todos los dueños.
+
+    Returns
+    -------
+    json : list
+        Listado de dueños en formato JSON.
+    int
+        Código de estado HTTP 200 (OK).
+    """
+    return jsonify(db.listar_duenos()), 200
+@app.route("/dueno", methods=["POST"])
+def crear_dueno():
+    """
+    Crea un nuevo dueño.
+
+    Cuerpo JSON con los datos del dueño (nombre, nif, dirección, teléfono).
+    Campos mínimos: nombre, nif
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito e ID del dueño creado, o mensaje de error.
+    int
+        Código de estado HTTP 200 (OK) o 400 (Bad Request).
+    """
+    data = request.get_json(force=True)
+    if not data:
+        return {"error": "No se recibió JSON"}, 400
+
+    nombre = data.get("nombre")
+    nif = data.get("nif")
+    direccion = data.get("direccion")
+    telefono = data.get("telefono")
+    if not nombre or not nif:
+        return {"error": "Campos 'nif' y 'nombre' son obligatorios"}, 400
+
+
+    dueno_id = db.insert_dueno(
+        {
+            "nombre": nombre,
+            "nif": nif,
+            "direccion": direccion,
+            "telefono": telefono,
+        }
+    )
+    return {"mensaje": "Dueño", "id": dueno_id}, 200
+
+
+@app.route("/dueno/<int:dueno_id>", methods=["PUT"])
+def actualizar_dueno(dueno_id: int):
+    """
+    Actualiza la información de un dueño.
+
+    Parameters
+    ----------
+    dueno_id : int
+        ID del dueño a actualizar.
+
+    Cuerpo JSON con los campos a modificar (nombre, nif, dirección, teléfono).
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito o mensaje de error.
+    int
+        Código de estado HTTP 200 (OK) o 400 (Bad Request).
+    """
+    cambios = request.get_json(force=True) or {}
+    if not cambios:
+        return {"error": "JSON vacío"}, 400
+
+    db.update_dueno(dueno_id, cambios)
+    return {"mensaje": " Dueño actualizado"}, 200
+
+
+@app.route("/dueno/<int:dueno_id>", methods=["DELETE"])
+def borrar_dueno(dueno_id: int):
+    """
+    Elimina un dueño.
+
+    Parameters
+    ----------
+    dueno_id : int
+        ID del dueño a eliminar.
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito.
+    int
+        Código de estado HTTP 200 (OK).
+    """
+    db.delete_dueno(dueno_id)
+    return {"mensaje": "Dueño eliminado"}, 200
+@app.route("/veterinario", methods=["GET"])
+
+# PERSONA VETERINARIO
+def listar_veterinario():
+    """
+    Devuelve un listado JSON con todos los veterinarios.
+
+    Returns
+    -------
+    json : list
+        Listado de veterinarios en formato JSON.
+    int
+        Código de estado HTTP 200 (OK).
+    """
+    return jsonify(db.listar_veterinarios()), 200
+@app.route("/veterinario", methods=["POST"])
+def crear_veterinario():
+    """
+    Crea un nuevo veterinario.
+
+    Cuerpo JSON con los datos del veterinario (nombre, nif, dirección, teléfono, colegiado_id).
+    Campos mínimos: nombre, colegiado_id
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito e ID del veterinario creado, o mensaje de error.
+    int
+        Código de estado HTTP 200 (OK) o 400 (Bad Request).
+    """
+    data = request.get_json(force=True)
+    if not data:
+        return {"error": "No se recibió JSON"}, 400
+
+    nombre = data.get("nombre")
+    nif = data.get("nif")
+    direccion = data.get("direccion")
+    telefono = data.get("telefono")
+    colegiado_id = data.get("colegiado_id")
+    if not nombre or not colegiado_id:
+        return {"error": "Campos 'colegiado_id' y 'nombre' son obligatorios"}, 400
+
+
+    veterinario_id = db.insert_veterinario(
+        {
+            "nombre": nombre,
+            "nif": nif,
+            "direccion": direccion,
+            "colegiado_id": colegiado_id,
+            "telefono": telefono,
+        }
+    )
+    return {"mensaje": "Veterinario creado", "id": veterinario_id}, 200
+
+
+@app.route("/veterinario/<int:veterinario_id>", methods=["PUT"])
+def actualizar_veterinario(veterinario_id: int):
+    """
+    Actualiza la información de un veterinario.
+
+    Parameters
+    ----------
+    veterinario_id : int
+        ID del veterinario a actualizar.
+
+    Cuerpo JSON con los campos a modificar (nombre, nif, dirección, teléfono, colegiado_id).
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito o mensaje de error.
+    int
+        Código de estado HTTP 200 (OK) o 400 (Bad Request).
+    """
+    cambios = request.get_json(force=True) or {}
+    if not cambios:
+        return {"error": "JSON vacío"}, 400
+
+    db.update_veterinario(veterinario_id, cambios)
+    return {"mensaje": " Veterinario actualizado"}, 200
+
+
+@app.route("/veterinario/<int:veterinario_id>", methods=["DELETE"])
+def borrar_veterinario(veterinario_id: int):
+    """
+    Elimina un veterinario.
+
+    Parameters
+    ----------
+    veterinario_id : int
+        ID del veterinario a eliminar.
+
+    Returns
+    -------
+    json : dict
+        Mensaje de éxito.
+    int
+        Código de estado HTTP 200 (OK).
+    """
+    db.delete_veterinario(veterinario_id)
+    return {"mensaje": "Veterinario eliminado"}, 200
+
 if __name__ == "__main__":
-    # Usa SQLite salvo que exportes DB_BACKEND=mysql
+
     app.run(debug=True, port=5000)
+
