@@ -1,19 +1,16 @@
 """
 cuidado_perro.py
 
-Define la clase CuidadoPerro, que representa un cuidado específico para perros.
-
-Hereda de:
-    CuidadoProgramado
+Cuidado específico para perros.
 """
 
 from .cuidado_base import CuidadoProgramado
 
-class CuidadoPerro(CuidadoProgramado):
-    def realizar_cuidado(self):
-        """
-        Realiza el cuidado específico para perros.
 
-        Imprime un mensaje indicando que el cuidado ha sido realizado.
-        """
-        print(f"Realizando '{self.tipo_cuidado}' al perro (ID: {self.animal_id})")
+class CuidadoPerro(CuidadoProgramado):
+    """Aplica un cuidado a un perro."""
+
+    def realizar_cuidado(self) -> None:
+        """Marca el cuidado como realizado y muestra un mensaje."""
+        self.actualizar_estado("realizado")
+        print(f"🐶 Cuidado '{self.tipo_cuidado}' aplicado al perro (ID {self.animal_id}).")

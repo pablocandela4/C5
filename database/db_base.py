@@ -1,51 +1,97 @@
 """
-Clase base que define la interfaz mínima que deberán seguir
-los gestores concretos (SQLite y MySQL). También carga .env
-y expone la factoría para obtener el gestor correcto.
+db_base.py
+
+Define la interfaz base (DBManager) que deben implementar los gestores de
+base de datos concretos (por ahora MySQL, pero extensible a SQLite u otros).
+También carga las variables de entorno y expone la factoría `get_db_manager()`.
 """
+
+from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import Dict, List, Any, Optional
+
 from dotenv import load_dotenv
 
-# 1) Carga de variables de entorno
+# ──────────────────────── 1) Variables de entorno ────────────────────────────
 load_dotenv()
 
-print("DB_TYPE=",      os.getenv("DB_TYPE"))
-print("DB_USER=",      os.getenv("DB_USER"))
-print("DB_PASS=",      os.getenv("DB_PASS"))
+DB_TYPE: str  = os.getenv("DB_TYPE", "mysql")      # «mysql» por defecto
+DB_HOST: str  = os.getenv("DB_HOST", "localhost")
+DB_PORT: int  = int(os.getenv("DB_PORT", 3306))
+DB_NAME: str  = os.getenv("DB_NAME", "clinica")
+DB_USER: str  = os.getenv("DB_USER", "")
+DB_PASS: str  = os.getenv("DB_PASS", "")
 
-DB_TYPE = os.getenv("DB_TYPE", "sqlite")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = int(os.getenv("DB_PORT", 3306))
-DB_NAME = os.getenv("DB_NAME", "datos/clinica.db")
-DB_USER = os.getenv("DB_USER", "")
-DB_PASS = os.getenv("DB_PASS", "")
-
-
-# 2) Define la interfaz base
+# ──────────────────────── 2) Interfaz genérica ───────────────────────────────
 class DBManager(ABC):
-    """Interfaz CRUD genérica."""
+    """Interfaz CRUD que usan el resto de capas de la aplicación."""
+
+    # ── Animales ────────────────────────────────────────────────────────────
+    @abstractmethod
+    def insert_animal(self, datos: Dict[str, Any]) -> int:
+        """Crea un animal y devuelve su ID (chip)."""                                # noqa: D401
+        ...
 
     @abstractmethod
-    def insert_animal(self, datos: Dict[str, Any]) -> int: ...
+    def get_animales(self) -> List[Dict[str, Any]]:
+        """Devuelve todos los animales como lista de dicts."""
+        ...
+
     @abstractmethod
-    def get_animales(self) -> List[Dict[str, Any]]: ...
+    def update_animal(self, animal_id: int, datos: Dict[str, Any]) -> None:
+        """Actualiza los campos indicados en `datos` para el animal `animal_id`."""
+        ...
+
     @abstractmethod
-    def update_animal(self, animal_id: int, datos: Dict[str, Any]) -> None: ...
+    def delete_animal(self, animal_id: int) -> None:
+        """Elimina el animal con ID `animal_id`."""
+        ...
+
+    # ── Cuidados ────────────────────────────────────────────────────────────
     @abstractmethod
-    def delete_animal(self, animal_id: int) -> None: ...
+    def insert_cuidado(self, datos: Dict[str, Any]) -> int:
+        """
+        Inserta un cuidado programado.
+        `datos` debe contener: animal_id, fecha, tipo, estado (opcional), notas.
+        Devuelve el ID autogenerado del cuidado.
+        """
+        ...
 
+    @abstractmethod
+    def get_cuidados(
+        self,
+        animal_id: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Devuelve los cuidados.  
+        Si `animal_id` es `None`, devuelve todos; en caso contrario, solo
+        los asociados al animal indicado.
+        """
+        ...
 
-# 3) Importa los gestores concretos *después* de definir DBManager
-from .mysql_manager import MySQLManager
+    @abstractmethod
+    def update_cuidado(self, cuidado_id: int, datos: Dict[str, Any]) -> None:
+        """Actualiza los campos indicados en `datos` para el cuidado `cuidado_id`."""
+        ...
 
+    @abstractmethod
+    def delete_cuidado(self, cuidado_id: int) -> None:
+        """Elimina el cuidado con ID `cuidado_id`."""
+        ...
 
-# 4) La factoría que escoge el gestor según DB_TYPE
+# ──────────────────────── 3) Importa gestores concretos ──────────────────────
+from .mysql_manager import MySQLManager   # noqa: E402  (import después de ABC)
+
+# ──────────────────────── 4) Factoría de gestores ────────────────────────────
 def get_db_manager() -> DBManager:
     """
-    Devuelve una instancia de SQLiteManager o MySQLManager según .env.
+    Devuelve una instancia del gestor adecuado según la variable `DB_TYPE`.
+
+    Por ahora solo está implementado MySQL.  Si quieres soporte para SQLite
+    u otros motores, crea un fichero `sqlite_manager.py` que herede de
+    `DBManager` e inclúyelo aquí.
     """
     if DB_TYPE.lower() == "mysql":
         return MySQLManager(
@@ -53,7 +99,10 @@ def get_db_manager() -> DBManager:
             port=DB_PORT,
             user=DB_USER,
             password=DB_PASS,
-            database=DB_NAME
+            database=DB_NAME,
         )
-    # Ruta al archivo, si DB_NAME es la ruta relativa al .db
-    raise RuntimeError("Solo está configurado para MySQL")
+
+    raise RuntimeError(
+        f"DB_TYPE='{DB_TYPE}' no está soportado. "
+        "Implementa un gestor concreto o cambia la variable de entorno."
+    )
