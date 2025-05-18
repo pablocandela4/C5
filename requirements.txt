@@ -3,3 +3,5 @@
 flask
 requests
 mysql-connector-python
+mysqlclient>=2.1
+python-dotenv>=1.0
