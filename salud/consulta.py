@@ -23,7 +23,7 @@ class Consulta:
         self.fecha = fecha
         self.diagnostico = diagnostico
 
-    def __str__(self):
+    def __str__(self)
         """
         Devuelve una representación legible de la consulta.
 
