@@ -17,23 +17,42 @@ from mysql.connector import Error
 
 from .db_base import DBManager
 
-
 class MySQLManager(DBManager):
     """
-    Implementa los métodos CRUD definidos en DBManager para MySQL.
-    Gestiona dos tablas: `animales` y `cuidados`.
+    Operaciones CRUD para la base de datos MySQL gestionando las tablas:
+    duenos, veterinarios, animales, cuidados y alimentos
     """
 
-    # ──────────────────────────────── Setup ──────────────────────────────────
-    def __init__(
+    # ──────────────────────────────── Configuración ──────────────────────────────────
+    def _init_(
         self,
-        host: str | None = None,
-        port: int | None = None,
-        user: str | None = None,
-        password: str | None = None,
-        database: str | None = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
     ) -> None:
-        # Config desde argumentos o variables de entorno
+        """
+        Inicializa la configuración de conexión a la base de datos.
+
+        Parameters
+        ----------
+        host : str, optional
+            Dirección del servidor MySQL. Por defecto, variable de entorno DB_HOST o 'localhost'.
+        port : int, optional
+            Puerto del servidor MySQL. Por defecto, DB_PORT o 3306.
+        user : str, optional
+            Usuario de la base de datos. Por defecto, DB_USER.
+        password : str, optional
+            Contraseña de la base de datos. Por defecto, DB_PASS.
+        database : str, optional
+            Nombre de la base de datos. Por defecto, DB_NAME.
+
+        Raises
+        ------
+        Error
+            Si ocurre un error al conectar o inicializar la base de datos.
+        """
         self.config: Dict[str, Any] = {
             "host": host or os.getenv("DB_HOST", "localhost"),
             "port": port or int(os.getenv("DB_PORT", 3306)),
@@ -45,32 +64,84 @@ class MySQLManager(DBManager):
         self._init_db()
 
     def _connect(self):
-        """Devuelve una conexión nueva usando self.config."""
+        """
+        Establece y devuelve una nueva conexión MySQL.
+
+        Returns
+        -------
+        mysql.connector.connection.MySQLConnection
+            Conexión activa a la base de datos.
+
+        Raises
+        ------
+        Error
+            Si la conexión falla.
+        """
         try:
             return mysql.connector.connect(**self.config)
         except Error as e:
-            print("❌ Error al conectar a MySQL:", e)
+            print(" Error al conectar a MySQL:", e)
             raise
 
     def _init_db(self) -> None:
-        """Crea tablas `animales` y `cuidados` si no existen."""
-        ddl_animales = """
-        CREATE TABLE IF NOT EXISTS animales (
-            chip     INT AUTO_INCREMENT PRIMARY KEY,
-            tipo     VARCHAR(20)  NOT NULL,
-            nombre   VARCHAR(100) NOT NULL,
-            raza     VARCHAR(100),
-            edad     INT
+        """
+        Crea las tablas necesarias si no existen.
+
+        Tablas creadas:
+        - duenos
+        - veterinarios
+        - animales
+        - cuidados
+        - alimentos
+
+        Raises
+        ------
+        Error
+            Si ocurre un error durante la creación de tablas.
+        """
+        ddl_duenos = """
+        CREATE TABLE IF NOT EXISTS duenos (
+            id_dueno      INT AUTO_INCREMENT PRIMARY KEY,
+            nif            VARCHAR(20) UNIQUE NOT NULL,
+            nombre         VARCHAR(100) NOT NULL,
+            direccion      VARCHAR(200) NOT NULL,
+            telefono       VARCHAR(20) NOT NULL
         ) ENGINE=InnoDB;
         """
-
+        ddl_veterinarios = """
+        CREATE TABLE IF NOT EXISTS veterinarios (
+            colegiado_id  INT AUTO_INCREMENT PRIMARY KEY,
+            nombre         VARCHAR(100) NOT NULL,
+            nif            VARCHAR(20) UNIQUE NOT NULL,
+            direccion      VARCHAR(200) NOT NULL,
+            telefono       VARCHAR(20) NOT NULL
+        ) ENGINE=InnoDB;
+        """
+        ddl_animales = """
+        CREATE TABLE IF NOT EXISTS animales (
+            id_animal       INT AUTO_INCREMENT PRIMARY KEY,
+            chip            VARCHAR(60) UNIQUE NOT NULL,
+            especie         VARCHAR(100) NOT NULL,
+            nombre          VARCHAR(100) NOT NULL,
+            edad            INT,
+            raza            VARCHAR(100),
+            dueno_id        INT,
+            colegiado_id    INT,
+            CONSTRAINT fk_dueno
+                FOREIGN KEY (dueno_id)
+                REFERENCES duenos(id_dueno),
+            CONSTRAINT fk_veterinario
+                FOREIGN KEY (colegiado_id)
+                REFERENCES veterinarios(colegiado_id)
+        ) ENGINE=InnoDB;
+        """
         ddl_cuidados = """
         CREATE TABLE IF NOT EXISTS cuidados (
             id        INT AUTO_INCREMENT PRIMARY KEY,
-            animal_id INT          NOT NULL,
-            fecha     DATE         NOT NULL,
-            tipo      VARCHAR(50)  NOT NULL,
-            estado    VARCHAR(20)  NOT NULL DEFAULT 'pendiente',
+            animal_id VARCHAR(60)      NOT NULL,
+            fecha     DATE             NOT NULL,
+            tipo      VARCHAR(50)      NOT NULL,
+            estado    VARCHAR(20)      NOT NULL DEFAULT 'pendiente',
             notas     TEXT,
             CONSTRAINT fk_animal
                 FOREIGN KEY (animal_id)
@@ -88,162 +159,74 @@ class MySQLManager(DBManager):
             coste            FLOAT        NOT NULL
         ) ENGINE=InnoDB;
         """
-        cur.execute(ddl_alimentos)
 
         with self._connect() as conn:
             cur = conn.cursor()
-            cur.execute(ddl_animales)
-            cur.execute(ddl_cuidados)
-            cur.execute(ddl_alimentos)
-            cur.close()
+            try:
+                cur.execute(ddl_duenos)
+                cur.execute(ddl_veterinarios)
+                cur.execute(ddl_animales)
+                cur.execute(ddl_cuidados)
+                cur.execute(ddl_alimentos)
+            finally:
+                cur.close()
 
-    # ───────────────────────────── Animales ──────────────────────────────────
-    def insert_animal(self, datos: Dict[str, Any]) -> int:
+    # ──────────────────────────────── Dueños ──────────────────────────────────
+    def insert_dueno(self, datos: Dict[str, Any]) -> int:
         """
-        Espera keys: tipo, nombre, edad (opcional), raza (opcional).
-        Devuelve el chip autogenerado.
+        Inserta un nuevo dueño en la tabla duenos.
+
+        Parameters
+        ----------
+        datos : dict
+            Diccionario con las claves:
+            - nif (str): NIF del dueño.
+            - nombre (str): Nombre del dueño.
+            - direccion (str): Dirección del dueño.
+            - telefono (str): Teléfono del dueño.
+
+        Returns
+        -------
+        int
+            ID autogenerado id_dueno.
+
+        Raises
+        ------
+        Error
+            Si ocurre un error durante la inserción.
         """
-        q = """
-        INSERT INTO animales (tipo, nombre, raza, edad)
-        VALUES (%(tipo)s, %(nombre)s, %(raza)s, %(edad)s)
-        """
+        q = (
+            "INSERT INTO duenos (nif, nombre, direccion, telefono) "
+            "VALUES (%(nif)s, %(nombre)s, %(direccion)s, %(telefono)s)"
+        )
         with self._connect() as conn:
             cur = conn.cursor()
-            cur.execute(q, datos)
-            animal_id = cur.lastrowid
-            cur.close()
-            return animal_id
+            try:
+                cur.execute(q, datos)
+                return cur.lastrowid
+            finally:
+                cur.close()
 
-    def get_animales(self) -> List[Dict[str, Any]]:
-        q = "SELECT * FROM animales"
+    def get_duenos(self) -> List[Dict[str, Any]]:
+        """
+        Obtiene todos los registros de la tabla duenos.
+
+        Returns
+        -------
+        List[Dict[str, Any]]
+            Lista de diccionarios con los campos:
+            id_dueno, nif, nombre, direccion, telefono.
+
+        Raises
+        ------
+        Error
+            Si ocurre un error durante la consulta.
+        """
+        q = "SELECT id_dueno, nif, nombre, direccion, telefono FROM duenos"
         with self._connect() as conn:
             cur = conn.cursor(dictionary=True)
-            cur.execute(q)
-            rows = cur.fetchall()
-            cur.close()
-            return rows
-
-    def update_animal(self, animal_id: int, datos: Dict[str, Any]) -> None:
-        if not datos:
-            return
-        sets = ", ".join(f"{k} = %({k})s" for k in datos.keys())
-        datos["chip"] = animal_id
-        q = f"UPDATE animales SET {sets} WHERE chip = %(chip)s"
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, datos)
-            cur.close()
-
-    def delete_animal(self, animal_id: int) -> None:
-        q = "DELETE FROM animales WHERE chip = %s"
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, (animal_id,))
-            cur.close()
-
-    # ───────────────────────────── Cuidados ──────────────────────────────────
-    def insert_cuidado(self, datos: Dict[str, Any]) -> int:
-        """
-        Keys obligatorias: animal_id, fecha(YYYY-MM-DD), tipo.
-        Keys opcionales: estado, notas.
-        """
-        q = """
-        INSERT INTO cuidados (animal_id, fecha, tipo, estado, notas)
-        VALUES (%(animal_id)s, %(fecha)s, %(tipo)s,
-                %(estado)s, %(notas)s)
-        """
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, datos)
-            cuidado_id = cur.lastrowid
-            cur.close()
-            return cuidado_id
-
-    def get_cuidados(
-        self,
-        animal_id: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
-        if animal_id is None:
-            q = "SELECT * FROM cuidados ORDER BY fecha DESC"
-            params: tuple = ()
-        else:
-            q = "SELECT * FROM cuidados WHERE animal_id = %s ORDER BY fecha DESC"
-            params = (animal_id,)
-
-        with self._connect() as conn:
-            cur = conn.cursor(dictionary=True)
-            cur.execute(q, params)
-            rows = cur.fetchall()
-            cur.close()
-            return rows
-
-    def update_cuidado(self, cuidado_id: int, datos: Dict[str, Any]) -> None:
-        if not datos:
-            return
-        sets = ", ".join(f"{k} = %({k})s" for k in datos.keys())
-        datos["id"] = cuidado_id
-        q = f"UPDATE cuidados SET {sets} WHERE id = %(id)s"
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, datos)
-            cur.close()
-
-    def delete_cuidado(self, cuidado_id: int) -> None:
-        q = "DELETE FROM cuidados WHERE id = %s"
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, (cuidado_id,))
-            cur.close()
-
-    # ───────────────────────────── Alimentos ──────────────────────────────────
-    def insertar_alimento(self, datos: Dict[str, Any]) -> int:
-        """
-        Inserta un nuevo alimento.
-        Keys esperadas: tipo_animal, alimento, cantidad, fecha_caducidad, coste.
-        """
-        q = """
-        INSERT INTO alimentos (tipo_animal, alimento, cantidad, fecha_caducidad, coste)
-        VALUES (%(tipo_animal)s, %(alimento)s, %(cantidad)s, %(fecha_caducidad)s, %(coste)s)
-        """
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, datos)
-            alimento_id = cur.lastrowid
-            cur.close()
-            return alimento_id
-
-    def obtener_alimentos(self) -> List[Dict[str, Any]]:
-        q = "SELECT * FROM alimentos"
-        with self._connect() as conn:
-            cur = conn.cursor(dictionary=True)
-            cur.execute(q)
-            rows = cur.fetchall()
-            cur.close()
-            return rows
-
-    def obtener_alimento(self, alimento_id: int) -> Optional[Dict[str, Any]]:
-        q = "SELECT * FROM alimentos WHERE id = %s"
-        with self._connect() as conn:
-            cur = conn.cursor(dictionary=True)
-            cur.execute(q, (alimento_id,))
-            row = cur.fetchone()
-            cur.close()
-            return row
-
-    def actualizar_alimento(self, alimento_id: int, datos: Dict[str, Any]) -> None:
-        if not datos:
-            return
-        sets = ", ".join(f"{k} = %({k})s" for k in datos.keys())
-        datos["id"] = alimento_id
-        q = f"UPDATE alimentos SET {sets} WHERE id = %(id)s"
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, datos)
-            cur.close()
-
-    def eliminar_alimento(self, alimento_id: int) -> None:
-        q = "DELETE FROM alimentos WHERE id = %s"
-        with self._connect() as conn:
-            cur = conn.cursor()
-            cur.execute(q, (alimento_id,))
-            cur.close()
+            try:
+                cur.execute(q)
+                return cur.fetchall()
+            finally:
+                cur.close()
