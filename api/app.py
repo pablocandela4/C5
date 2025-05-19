@@ -3,7 +3,7 @@ app.py · API RESTful Clínica Veterinaria
 
 • CRUD animales
 • CRUD cuidados
-• CRUD dueños y veterinarios
+• CRUD dueño y veterinario
 """
 
 from __future__ import annotations

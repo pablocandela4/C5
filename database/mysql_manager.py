@@ -11,7 +11,7 @@ from .db_base import DBManager
 class MySQLManager(DBManager):
     """
     Operaciones CRUD para la base de datos MySQL gestionando las tablas:
-    `duenos`, `veterinarios`, `animales`, `cuidados` y `alimentos`.
+    `duenos`, `veterinarios`, `animales`, `cuidados` y `alimentos`
     """
 
     # ──────────────────────────────── Configuración ──────────────────────────────────
