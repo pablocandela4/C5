@@ -1,554 +1,223 @@
-"""
-Gestor concreto para MySQL.
-Instala mysql-connector-python en tu venv:
-    pip install mysql-connector-python
-"""
+from __future__ import annotations
 
 import os
+from typing import Any, Dict, List, Optional
+
 import mysql.connector
 from mysql.connector import Error
-from typing import Dict, Any, List, Optional
+
 from .db_base import DBManager
 
 class MySQLManager(DBManager):
-    """Gestor para MySQL (local o PythonAnywhere)."""
+    """
+    Operaciones CRUD para la base de datos MySQL gestionando las tablas:
+    `duenos`, `veterinarios`, `animales`, `cuidados` y `alimentos`.
+    """
 
+    # ──────────────────────────────── Configuración ──────────────────────────────────
     def __init__(
         self,
-        host: str | None = None,
-        port: int | None = None,
-        user: str | None = None,
-        password: str | None = None,
-        database: str | None = None,
-    ):
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
+    ) -> None:
+        """
+        Inicializa la configuración de conexión a la base de datos.
 
-        self.config = {
-            'host': host or os.getenv("DB_HOST", "localhost"),
-            'port': port or int(os.getenv("DB_PORT", 3306)),
-            'user': user or os.getenv("DB_USER", ""),
-            'password': password or os.getenv("DB_PASS", ""),
-            'database': database or os.getenv("DB_NAME", ""),
+        Parameters
+        ----------
+        host : str, optional
+            Dirección del servidor MySQL. Por defecto, variable de entorno DB_HOST o 'localhost'.
+        port : int, optional
+            Puerto del servidor MySQL. Por defecto, DB_PORT o 3306.
+        user : str, optional
+            Usuario de la base de datos. Por defecto, DB_USER.
+        password : str, optional
+            Contraseña de la base de datos. Por defecto, DB_PASS.
+        database : str, optional
+            Nombre de la base de datos. Por defecto, DB_NAME.
+
+        Raises
+        ------
+        Error
+            Si ocurre un error al conectar o inicializar la base de datos.
+        """
+        self.config: Dict[str, Any] = {
+            "host": host or os.getenv("DB_HOST", "localhost"),
+            "port": port or int(os.getenv("DB_PORT", 3306)),
+            "user": user or os.getenv("DB_USER", ""),
+            "password": password or os.getenv("DB_PASS", ""),
+            "database": database or os.getenv("DB_NAME", ""),
+            "autocommit": True,
         }
         self._init_db()
 
     def _connect(self):
+        """
+        Establece y devuelve una nueva conexión MySQL.
+
+        Returns
+        -------
+        mysql.connector.connection.MySQLConnection
+            Conexión activa a la base de datos.
+
+        Raises
+        ------
+        Error
+            Si la conexión falla.
+        """
         try:
             return mysql.connector.connect(**self.config)
         except Error as e:
             print(" Error al conectar a MySQL:", e)
             raise
 
-
-def _init_db(self) -> None:
-    """
-    Inicializa la base de datos creando las tablas si no existen.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor()
-
-
-            cur.execute("""
-                   CREATE TABLE IF NOT EXISTS duenos (
-                       id_dueno INT AUTO_INCREMENT PRIMARY KEY,
-                       nif VARCHAR(20) UNIQUE NOT NULL,
-                       nombre VARCHAR(100) NOT NULL,
-                       direccion VARCHAR(200) NOT NULL,
-                       telefono VARCHAR(20) NOT NULL
-                   )
-               """)
-
-            cur.execute("""
-                   CREATE TABLE IF NOT EXISTS veterinarios (
-                       colegiado_id INT AUTO_INCREMENT PRIMARY KEY,
-                       nombre VARCHAR(100) NOT NULL,
-                       nif VARCHAR(20) UNIQUE NOT NULL,
-                       direccion VARCHAR(200) NOT NULL,
-                       telefono VARCHAR(20) NOT NULL
-                   )
-               """)
-
-
-            cur.execute("""
-                   CREATE TABLE IF NOT EXISTS animales (
-                       id_animal INT AUTO_INCREMENT PRIMARY KEY,
-                       chip VARCHAR(60) UNIQUE NOT NULL,
-                       especie VARCHAR(100) NOT NULL,
-                       nombre VARCHAR(100) NOT NULL,
-                       edad INT,
-                       raza VARCHAR(100),
-                       dueno_id INT,
-                       veterinario_id INT,
-                       FOREIGN KEY (dueno_id) REFERENCES duenos(id_dueno),
-                       FOREIGN KEY (veterinario_id) REFERENCES veterinarios(colegiado_id)
-                   )
-               """)
-
-            con.commit()
-            cur.close()
-    except Error as e:
-        print(f"Error al inicializar la base de datos: {e}")
-        raise  # Relanza la excepción
-
-
-def insertar_animal(self, datos: Dict[str, Any]) -> int:
-    """
-    Inserta un nuevo animal en la base de datos.
-
-    Parameters
-    ----------
-    datos : Dict[str, Any]
-        Diccionario con los datos del animal a insertar.
-        Debe contener las claves: 'especie', 'nombre', 'chip'.
-        Puede contener opcionalmente: 'edad', 'raza', 'dueno_id', 'veterinario_id'.
-
-    Returns
-    -------
-    int
-        El ID del animal insertado.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la inserción.
-    """
-    try:
-        q = ("INSERT INTO animales (chip, especie, nombre, edad, raza, dueno_id, veterinario_id) "
-             "VALUES (%(chip)s, %(especie)s, %(nombre)s, %(edad)s, %(raza)s, %(dueno_id)s, %(veterinario_id)s)")
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute(q, datos)
-            con.commit()
-            last_id = cur.lastrowid
-            cur.close()
-            return last_id
-    except Error as e:
-        print(f"Error al insertar animal: {e}")
-        raise  # Relanza la excepción
-
-
-def obtener_animales(self) -> List[Dict[str, Any]]:
-    """
-    Obtiene todos los animales de la base de datos.
-
-    Returns
-    -------
-    List[Dict[str, Any]]
-        Una lista de diccionarios, donde cada diccionario representa un animal.
-        Las claves de cada diccionario son: 'id_animal', 'chip', 'especie', 'nombre', 'edad', 'raza', 'dueno_id', 'veterinario_id'.
-        Si no hay animales, devuelve una lista vacía.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la consulta.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor(dictionary=True)
-            cur.execute(
-                "SELECT id_animal, chip, especie, nombre, edad, raza, dueno_id, veterinario_id FROM animales")
-            rows = cur.fetchall()
-            cur.close()
-            return rows
-    except Error as e:
-        print(f"Error al obtener animales: {e}")
-        raise  # Relanza la excepción
-
-
-def obtener_animal(self, animal_id: int) -> Optional[Dict[str, Any]]:
-    """
-    Obtiene un animal por su ID.
-
-    Parameters
-    ----------
-    animal_id : int
-        ID del animal a obtener.
-
-    Returns
-    -------
-    Optional[Dict[str, Any]]
-        Un diccionario representando al animal si se encuentra, None si no.
-        Devuelve None si no se encuentra ningún animal con el ID dado.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la consulta.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor(dictionary=True)
-            cur.execute(
-                "SELECT id_animal, chip, especie, nombre, edad, raza, dueno_id, veterinario_id FROM animales WHERE id_animal = %s",
-                (animal_id,),
-            )
-            row = cur.fetchone()
-            cur.close()
-            return row  # Devuelve None si no se encuentra el animal
-    except Error as e:
-        print(f"Error al obtener animal: {e}")
-        raise  # Relanza la excepción
-
-
-def actualizar_animal(self, animal_id: int, datos: Dict[str, Any]) -> None:
-    """
-    Actualiza la información de un animal existente.
-
-    Parameters
-    ----------
-    animal_id : int
-        ID del animal a actualizar.
-    datos : Dict[str, Any]
-        Diccionario con los datos a actualizar.  Puede contener cualquier
-        combinación de las claves: 'especie', 'nombre', 'edad', 'raza', 'chip', 'dueno_id', 'veterinario_id'.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la actualización.
-    """
-    try:
-        sets = ", ".join(f"{k} = %({k})s" for k in datos.keys())
-        datos["id_animal"] = animal_id  # Asegúrate de que el ID esté en los datos
-        q = f"UPDATE animales SET {sets} WHERE id_animal = %(id_animal)s"
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute(q, datos)
-            con.commit()
-            cur.close()
-        # No es necesario devolver nada en caso de éxito, por eso es None
-    except Error as e:
-        print(f"Error al actualizar animal: {e}")
-        raise  # Relanza la excepción
-
-
-def eliminar_animal(self, animal_id: int) -> None:
-    """
-    Elimina un animal de la base de datos.
-
-    Parameters
-    ----------
-    animal_id : int
-        ID del animal a eliminar.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la eliminación.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute("DELETE FROM animales WHERE id_animal = %s", (animal_id,))
-            con.commit()
-            cur.close()
-    except Error as e:
-        print(f"Error al eliminar animal: {e}")
-        raise  # Relanza la excepción
-
-
-def insertar_dueno(self, datos: Dict[str, Any]) -> int:
-    """
-    Inserta un nuevo dueño en la base de datos.
-
-    Parameters
-    ----------
-    datos : Dict[str, Any]
-        Diccionario con los datos del dueño a insertar.
-        Debe contener las claves: 'nombre', 'nif', 'direccion', 'telefono'.
-
-    Returns
-    -------
-    int
-        El ID del dueño insertado.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la inserción.
-    """
-    try:
-        q = ("INSERT INTO duenos (nif, nombre, direccion, telefono) "
-             "VALUES (%(nif)s, %(nombre)s, %(direccion)s, %(telefono)s)")
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute(q, datos)
-            con.commit()
-            last_id = cur.lastrowid
-            cur.close()
-            return last_id
-    except Error as e:
-        print(f"Error al insertar dueño: {e}")
-        raise  # Relanza la excepción
-
-
-def obtener_duenos(self) -> List[Dict[str, Any]]:
-    """
-    Obtiene todos los dueños de la base de datos.
-
-    Returns
-    -------
-    List[Dict[str, Any]]
-        Una lista de diccionarios, donde cada diccionario representa un dueño.
-        Las claves de cada diccionario son: 'id_dueno', 'nif', 'nombre', 'direccion', 'telefono'.
-        Si no hay dueños, devuelve una lista vacía.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la consulta.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor(dictionary=True)
-            cur.execute("SELECT id_dueno, nif, nombre, direccion, telefono FROM duenos")
-            rows = cur.fetchall()
-            cur.close()
-            return rows
-    except Error as e:
-        print(f"Error al obtener dueños: {e}")
-        raise  # Relanza la excepción
-
-
-def obtener_dueno(self, dueno_id: int) -> Optional[Dict[str, Any]]:
-    """
-    Obtiene un dueño por su ID.
-
-    Parameters
-    ----------
-    dueno_id : int
-        ID del dueño a obtener.
-
-    Returns
-    -------
-    Optional[Dict[str, Any]]
-        Un diccionario representando al dueño si se encuentra, None si no.
-        Devuelve None si no se encuentra ningún dueño con el ID dado.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la consulta.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor(dictionary=True)
-            cur.execute("SELECT id_dueno, nif, nombre, direccion, telefono FROM duenos WHERE id_dueno = %s",
-                        (dueno_id,))
-            row = cur.fetchone()
-            cur.close()
-            return row  # Devuelve None si no se encuentra el dueño
-    except Error as e:
-        print(f"Error al obtener dueno: {e}")
-        raise  # Relanza la excepción
-
-
-def actualizar_dueno(self, dueno_id: int, datos: Dict[str, Any]) -> None:
-    """
-    Actualiza la información de un dueño existente.
-
-    Parameters
-    ----------
-    dueno_id : int
-        ID del dueño a actualizar.
-    datos : Dict[str, Any]
-        Diccionario con los datos a actualizar.  Puede contener cualquier
-        combinación de las claves: 'nombre', 'nif', 'direccion', 'telefono'.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la actualización.
-    """
-    try:
-        sets = ", ".join(f"{k} = %({k})s" for k in datos.keys())
-        datos["id_dueno"] = dueno_id
-        q = f"UPDATE duenos SET {sets} WHERE id_dueno = %(id_dueno)s"
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute(q, datos)
-            con.commit()
-            cur.close()
-    except Error as e:
-        print(f"Error al actualizar dueño: {e}")
-        raise  # Relanza la excepción
-
-
-def eliminar_dueno(self, dueno_id: int) -> None:
-    """
-    Elimina un dueño de la base de datos.
-
-    Parameters
-    ----------
-    dueno_id : int
-        ID del dueño a eliminar.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la eliminación.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute("DELETE FROM duenos WHERE id_dueno = %s", (dueno_id,))
-            con.commit()
-            cur.close()
-    except Error as e:
-        print(f"Error al eliminar dueño: {e}")
-        raise  # Relanza la excepción
-
-
-def insertar_veterinario(self, datos: Dict[str, Any]) -> int:
-    """
-    Inserta un nuevo veterinario en la base de datos.
-
-    Parameters
-    ----------
-    datos : Dict[str, Any]
-        Diccionario con los datos del veterinario a insertar.
-        Debe contener las claves: 'nombre', 'colegiado_id'.
-        Puede contener opcionalmente: 'nif', 'direccion', 'telefono'.
-
-    Returns
-    -------
-    int
-        El ID del veterinario insertado.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la inserción.
-    """
-    try:
-        q = ("INSERT INTO veterinarios (nombre, nif, direccion, telefono, colegiado_id) "
-             "VALUES (%(nombre)s, %(nif)s, %(direccion)s, %(telefono)s, %(colegiado_id)s)")
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute(q, datos)
-            con.commit()
-            last_id = cur.lastrowid
-            cur.close()
-            return last_id
-    except Error as e:
-        print(f"Error al insertar veterinario: {e}")
-        raise  # Relanza la excepción
-
-
-def obtener_veterinarios(self) -> List[Dict[str, Any]]:
-    """
-    Obtiene todos los veterinarios de la base de datos.
-
-    Returns
-    -------
-    List[Dict[str, Any]]
-        Una lista de diccionarios, donde cada diccionario representa un veterinario.
-        Las claves del diccionario son: 'colegiado_id', 'nombre', 'nif', 'direccion', 'telefono'.
-        Si no hay veterinarios, devuelve una lista vacía.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la consulta.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor(dictionary=True)
-            cur.execute("SELECT colegiado_id, nombre, nif, direccion, telefono FROM veterinarios")
-            rows = cur.fetchall()
-            cur.close()
-            return rows
-    except Error as e:
-        print(f"Error al obtener veterinarios: {e}")
-        raise  # Relanza la excepción
-
-
-def obtener_veterinario(self, colegiado_id: int) -> Optional[Dict[str, Any]]:
-    """
-    Obtiene un veterinario por su ID de colegiado.
-
-    Parameters
-    ----------
-    colegiado_id : int
-        ID de colegiado del veterinario a obtener.
-
-    Returns
-    -------
-    Optional[Dict[str, Any]]
-        Un diccionario representando al veterinario si se encuentra, None si no.
-        Devuelve None si no se encuentra ningún veterinario con el ID dado.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la consulta.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor(dictionary=True)
-            cur.execute(
-                "SELECT colegiado_id, nombre, nif, direccion, telefono FROM veterinarios WHERE colegiado_id = %s",
-                (colegiado_id,))
-            row = cur.fetchone()
-            cur.close()
-            return row  # Devuelve None si no se encuentra el veterinario
-    except Error as e:
-        print(f"Error al obtener veterinario: {e}")
-        raise  # Relanza la excepción
-
-
-def actualizar_veterinario(self, colegiado_id: int, datos: Dict[str, Any]) -> None:
-    """
-    Actualiza la información de un veterinario existente.
-
-    Parameters
-    ----------
-    colegiado_id : int
-        ID del veterinario a actualizar (colegiado_id).
-    datos : Dict[str, Any]
-        Diccionario con los datos a actualizar.  Puede contener cualquier
-        combinación de las claves: 'nombre', 'nif', 'direccion', 'telefono', 'colegiado_id'.
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la actualización.
-    """
-    try:
-        sets = ", ".join(f"{k} = %({k})s" for k in datos.keys())
-        datos["colegiado_id"] = colegiado_id
-        q = f"UPDATE veterinarios SET {sets} WHERE colegiado_id = %(colegiado_id)s"
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute(q, datos)
-            con.commit()
-            cur.close()
-    except Error as e:
-        print(f"Error al actualizar veterinario: {e}")
-        raise  # Relanza la excepción
-
-
-def eliminar_veterinario(self, colegiado_id: int) -> None:
-    """
-    Elimina un veterinario de la base de datos.
-
-    Parameters
-    ----------
-    colegiado_id : int
-        ID del veterinario a eliminar (colegiado_id).
-
-    Raises
-    ------
-    Exception
-        Si ocurre un error durante la eliminación.
-    """
-    try:
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute("DELETE FROM veterinarios WHERE colegiado_id = %s", (colegiado_id,))
-            con.commit()
-            cur.close()
-    except Error as e:
-        print(f"Error al eliminar veterinario: {e}")
-        raise  # Relanza la excepción
+    def _init_db(self) -> None:
+        """
+        Crea las tablas necesarias si no existen.
+
+        Tablas creadas:
+        - duenos
+        - veterinarios
+        - animales
+        - cuidados
+        - alimentos
+
+        Raises
+        ------
+        Error
+            Si ocurre un error durante la creación de tablas.
+        """
+        ddl_duenos = """
+        CREATE TABLE IF NOT EXISTS duenos (
+            id_dueno      INT AUTO_INCREMENT PRIMARY KEY,
+            nif            VARCHAR(20) UNIQUE NOT NULL,
+            nombre         VARCHAR(100) NOT NULL,
+            direccion      VARCHAR(200) NOT NULL,
+            telefono       VARCHAR(20) NOT NULL
+        ) ENGINE=InnoDB;
+        """
+        ddl_veterinarios = """
+        CREATE TABLE IF NOT EXISTS veterinarios (
+            colegiado_id  INT AUTO_INCREMENT PRIMARY KEY,
+            nombre         VARCHAR(100) NOT NULL,
+            nif            VARCHAR(20) UNIQUE NOT NULL,
+            direccion      VARCHAR(200) NOT NULL,
+            telefono       VARCHAR(20) NOT NULL
+        ) ENGINE=InnoDB;
+        """
+        ddl_animales = """
+        CREATE TABLE IF NOT EXISTS animales (
+            id_animal       INT AUTO_INCREMENT PRIMARY KEY,
+            chip            VARCHAR(60) UNIQUE NOT NULL,
+            especie         VARCHAR(100) NOT NULL,
+            nombre          VARCHAR(100) NOT NULL,
+            edad            INT,
+            raza            VARCHAR(100),
+            dueno_id        INT,
+            colegiado_id    INT,
+            CONSTRAINT fk_dueno
+                FOREIGN KEY (dueno_id)
+                REFERENCES duenos(id_dueno),
+            CONSTRAINT fk_veterinario
+                FOREIGN KEY (colegiado_id)
+                REFERENCES veterinarios(colegiado_id)
+        ) ENGINE=InnoDB;
+        """
+        ddl_cuidados = """
+        CREATE TABLE IF NOT EXISTS cuidados (
+            id        INT AUTO_INCREMENT PRIMARY KEY,
+            animal_id VARCHAR(60)      NOT NULL,
+            fecha     DATE             NOT NULL,
+            tipo      VARCHAR(50)      NOT NULL,
+            estado    VARCHAR(20)      NOT NULL DEFAULT 'pendiente',
+            notas     TEXT,
+            CONSTRAINT fk_animal
+                FOREIGN KEY (animal_id)
+                REFERENCES animales(chip)
+                ON DELETE CASCADE
+        ) ENGINE=InnoDB;
+        """
+        ddl_alimentos = """
+        CREATE TABLE IF NOT EXISTS alimentos (
+            id               INT AUTO_INCREMENT PRIMARY KEY,
+            tipo_animal      VARCHAR(50)  NOT NULL,
+            alimento         VARCHAR(100) NOT NULL,
+            cantidad         INT          NOT NULL,
+            fecha_caducidad  DATE         NOT NULL,
+            coste            FLOAT        NOT NULL
+        ) ENGINE=InnoDB;
+        """
+
+        with self._connect() as conn:
+            cur = conn.cursor()
+            try:
+                cur.execute(ddl_duenos)
+                cur.execute(ddl_veterinarios)
+                cur.execute(ddl_animales)
+                cur.execute(ddl_cuidados)
+                cur.execute(ddl_alimentos)
+            finally:
+                cur.close()
+
+    # ──────────────────────────────── Dueños ──────────────────────────────────
+    def insert_dueno(self, datos: Dict[str, Any]) -> int:
+        """
+        Inserta un nuevo dueño en la tabla `duenos`.
+
+        Parameters
+        ----------
+        datos : dict
+            Diccionario con las claves:
+            - nif (str): NIF del dueño.
+            - nombre (str): Nombre del dueño.
+            - direccion (str): Dirección del dueño.
+            - telefono (str): Teléfono del dueño.
+
+        Returns
+        -------
+        int
+            ID autogenerado `id_dueno`.
+
+        Raises
+        ------
+        Error
+            Si ocurre un error durante la inserción.
+        """
+        q = (
+            "INSERT INTO duenos (nif, nombre, direccion, telefono) "
+            "VALUES (%(nif)s, %(nombre)s, %(direccion)s, %(telefono)s)"
+        )
+        with self._connect() as conn:
+            cur = conn.cursor()
+            try:
+                cur.execute(q, datos)
+                return cur.lastrowid
+            finally:
+                cur.close()
+
+    def get_duenos(self) -> List[Dict[str, Any]]:
+        """
+        Obtiene todos los registros de la tabla `duenos`.
+
+        Returns
+        -------
+        List[Dict[str, Any]]
+            Lista de diccionarios con los campos:
+            `id_dueno`, `nif`, `nombre`, `direccion`, `telefono`.
+
+        Raises
+        ------
+        Error
+            Si ocurre un error durante la consulta.
+        """
+        q = "SELECT id_dueno, nif, nombre, direccion, telefono FROM duenos"
+        with self._connect() as conn:
+            cur = conn.cursor(dictionary=True)
+            try:
+                cur.execute(q)
+                return cur.fetchall()
+            finally:
+                cur.close()
