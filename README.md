@@ -8,7 +8,6 @@ Este módulo forma parte del sistema de gestión veterinaria y permite registrar
 
 * (Coordinador) [Lucas Beneyto Sánchez-Sarachaga](https://github.com/lucasbeneyto)
 * [Pablo Candela Ortega](https://github.com/pablocandela4) ← Responsable del módulo de cuidados
-* [Úrsula Guillo Orts](https://github.com/u1159)
 * [Miguel Pérez Alonso](https://github.com/mpa113)
 * [Alejandro Paco García](https://github.com/apg260)
 
